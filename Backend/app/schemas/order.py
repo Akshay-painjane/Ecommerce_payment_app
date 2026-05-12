@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from Backend.app.schemas.order_item import OrderItemOut
+from app.schemas.order_item import OrderItemOut
 
 
 # Single order product

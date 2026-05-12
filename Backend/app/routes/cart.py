@@ -2,21 +2,21 @@ from fastapi import APIRouter, Depends
 
 from sqlalchemy.orm import Session
 
-from Backend.app.database import get_db
+from app.database import get_db
 
-from Backend.app.schemas.cart import (
+from app.schemas.cart import (
     CartCreate,
     CartOut,
     BulkCartCreate
 )
 
-from Backend.app.crud.cart import (
+from app.crud.cart import (
     add_to_cart,
     get_user_cart,
     bulk_add_to_cart
 )
 
-from Backend.app.auth.oauth import get_current_user
+from app.auth.oauth import get_current_user
 
 
 router = APIRouter(
