@@ -1,0 +1,77 @@
+from fastapi import APIRouter, Depends
+
+from sqlalchemy.orm import Session
+
+from Backend.app.database import get_db
+
+from Backend.app.schemas.cart import (
+    CartCreate,
+    CartOut,
+    BulkCartCreate
+)
+
+from Backend.app.crud.cart import (
+    add_to_cart,
+    get_user_cart,
+    bulk_add_to_cart
+)
+
+from Backend.app.auth.oauth import get_current_user
+
+
+router = APIRouter(
+    prefix="/cart",
+    tags=["Cart"]
+)
+
+
+# Add single product to cart
+
+@router.post(
+    "/",
+    response_model=CartOut
+)
+def add_product_to_cart(
+    cart: CartCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return add_to_cart(
+        db,
+        current_user.id,
+        cart
+    )
+
+
+# Add multiple products to cart
+
+@router.post("/bulk")
+def bulk_cart_add(
+    data: BulkCartCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return bulk_add_to_cart(
+        db,
+        current_user.id,
+        data.items
+    )
+
+
+# Get user cart
+
+@router.get(
+    "/",
+    response_model=list[CartOut]
+)
+def get_cart(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return get_user_cart(
+        db,
+        current_user.id
+    )
