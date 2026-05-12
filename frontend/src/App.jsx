@@ -1,17 +1,22 @@
 import { useState } from "react";
 import "./App.css";
 
+
 function App() {
   const [page, setPage] = useState("login");
   const [cart, setCart] = useState([]);
 
   const products = [
+    { name: "Smart Watch", price: 40000, img: "⌚", tag: "Best Seller" },
     { name: "iPhone 15 Pro", price: 129999, img: "📱", tag: "Best Seller" },
     { name: "MacBook Air", price: 89999, img: "💻", tag: "Deal" },
     { name: "Sony Headphones", price: 12999, img: "🎧", tag: "Top Rated" },
     { name: "Smart Watch", price: 3999, img: "⌚", tag: "New" },
     { name: "Gaming Mouse", price: 1299, img: "🖱️", tag: "Offer" },
     { name: "Travel Backpack", price: 999, img: "🎒", tag: "Hot" },
+    { name: "Smart Watch", price: 10000, img: "⌚", tag: "New" },
+    
+    
   ];
 
   const addToCart = (product) => {
