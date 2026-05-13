@@ -18,14 +18,14 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from Backend.app.database import Base
+from app.database import Base
 
-from Backend.app.models.user import User
-from Backend.app.models.product import Product
-from Backend.app.models.category import Category
-from Backend.app.models.cart import Cart
-from Backend.app.models.order import Order
-from Backend.app.models.payment import Payment
+from app.models.user import User
+from app.models.product import Product
+from app.models.category import Category
+from app.models.cart import Cart
+from app.models.order import Order
+from app.models.payment import Payment
 
 target_metadata = Base.metadata
 

@@ -2,19 +2,19 @@ from fastapi import APIRouter, Depends
 
 from sqlalchemy.orm import Session
 
-from Backend.app.database import get_db
+from app.database import get_db
 
-from Backend.app.schemas.category import (
+from app.schemas.category import (
     CategoryCreate,
     CategoryOut
 )
 
-from Backend.app.crud.category import (
+from app.crud.category import (
     create_category,
     get_categories
 )
 
-from Backend.app.auth.oauth import get_current_user
+from app.auth.oauth import get_current_user
 
 
 router = APIRouter(

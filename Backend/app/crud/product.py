@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.product import Product
+from app.models.product import Product
+from app.models.category import Category
 
-from Backend.app.schemas.product import (
+from app.schemas.product import (
     ProductCreate,
     ProductUpdate
 )
@@ -13,11 +14,20 @@ def create_product(
     product: ProductCreate
 ):
 
+    # check category exists
+    category = db.query(Category).filter(
+        Category.id == product.category_id
+    ).first()
+
+    if not category:
+        return None
+
     db_product = Product(
         name=product.name,
         description=product.description,
         price=product.price,
-        stock=product.stock
+        stock=product.stock,
+        category_id=product.category_id
     )
 
     db.add(db_product)
@@ -57,10 +67,29 @@ def update_product(
     if not db_product:
         return None
 
-    db_product.name = product.name
-    db_product.description = product.description
-    db_product.price = product.price
-    db_product.stock = product.stock
+    # validate category if provided
+    if product.category_id is not None:
+
+        category = db.query(Category).filter(
+            Category.id == product.category_id
+        ).first()
+
+        if not category:
+            return None
+
+        db_product.category_id = product.category_id
+
+    if product.name is not None:
+        db_product.name = product.name
+
+    if product.description is not None:
+        db_product.description = product.description
+
+    if product.price is not None:
+        db_product.price = product.price
+
+    if product.stock is not None:
+        db_product.stock = product.stock
 
     db.commit()
 

@@ -2,15 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from sqlalchemy.orm import Session
 
-from Backend.app.database import get_db
+from app.database import get_db
 
-from Backend.app.schemas.product import (
+from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
     ProductOut
 )
 
-from Backend.app.crud.product import (
+from app.crud.product import (
     create_product,
     get_all_products,
     get_product_by_id,
@@ -18,7 +18,7 @@ from Backend.app.crud.product import (
     delete_product
 )
 
-from Backend.app.auth.oauth import get_current_user
+from app.auth.oauth import get_current_user
 
 
 router = APIRouter(
@@ -37,7 +37,15 @@ def create_new_product(
     current_user = Depends(get_current_user)
 ):
 
-    return create_product(db, product)
+    db_product = create_product(db, product)
+
+    if not db_product:
+        raise HTTPException(
+            status_code=404,
+            detail="Category not found"
+        )
+
+    return db_product
 
 
 @router.get(
