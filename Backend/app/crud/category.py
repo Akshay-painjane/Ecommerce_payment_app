@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.category import Category
+from app.models.category import Category
 
-from Backend.app.schemas.category import CategoryCreate
+from app.schemas.category import CategoryCreate
 
 
 def create_category(

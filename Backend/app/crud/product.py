@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.product import Product
+from app.models.product import Product
 
-from Backend.app.schemas.product import (
+from app.schemas.product import (
     ProductCreate,
     ProductUpdate
 )
