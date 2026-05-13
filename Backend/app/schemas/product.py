@@ -13,6 +13,8 @@ class ProductCreate(BaseModel):
 
     category_id: int
 
+    image_url: str | None = None
+
 
 class ProductUpdate(BaseModel):
 
@@ -25,6 +27,8 @@ class ProductUpdate(BaseModel):
     stock: int
 
     category_id: int
+
+    image_url: str | None = None
 
 
 class ProductOut(BaseModel):
@@ -40,6 +44,8 @@ class ProductOut(BaseModel):
     stock: int
 
     category_id: int
+
+    image_url: str | None = None
 
     class Config:
         from_attributes = True

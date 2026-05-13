@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
+from fastapi import UploadFile, File
+import shutil
+
 from app.schemas.product import (
     ProductCreate,
     ProductUpdate,
@@ -18,14 +21,27 @@ from app.crud.product import (
     delete_product
 )
 
-from app.auth.oauth import get_current_user
+from app.dependencies.role_checker import admin_required
 
 
 router = APIRouter(
     prefix="/products",
     tags=["Products"]
 )
+@router.post("/upload-image")
+def upload_product_image(
+    file: UploadFile = File(...),
+    current_user = Depends(admin_required)
+):
 
+    file_path = f"static/products/{file.filename}"
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "image_url": f"/static/products/{file.filename}"
+    }
 
 @router.post(
     "/",
@@ -34,7 +50,7 @@ router = APIRouter(
 def create_new_product(
     product: ProductCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(admin_required)
 ):
 
     db_product = create_product(db, product)
@@ -91,7 +107,7 @@ def update_single_product(
     product_id: int,
     product: ProductUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(admin_required)
 ):
 
     updated_product = update_product(
@@ -116,7 +132,7 @@ def update_single_product(
 def delete_single_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(admin_required)
 ):
 
     deleted_product = delete_product(

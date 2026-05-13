@@ -9,8 +9,8 @@ from app.models.cart import Cart
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.payment import Payment
-
-
+#static
+from fastapi.staticfiles import StaticFiles
 #Routers
 from app.routes.users import router as user_router
 from app.routes.auth import router as auth_router
@@ -36,6 +36,12 @@ app = FastAPI(
     - Bulk Orders
     - Payments
     """
+)
+
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
 )
  
 #CORS

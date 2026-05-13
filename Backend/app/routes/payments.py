@@ -31,6 +31,7 @@ def create_new_payment(
 ):
 
     return create_payment(
-        db,
-        payment
-    )
+    db,
+    payment,
+    current_user.id
+)
