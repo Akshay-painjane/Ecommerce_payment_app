@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.user import User
+from app.models.user import User
 
-from Backend.app.schemas.user import UserCreate
+from app.schemas.user import UserCreate
 
-from Backend.app.auth.hashing import hash_password
+from app.auth.hashing import hash_password
 
 
 def create_user(

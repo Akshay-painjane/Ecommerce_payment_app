@@ -5,20 +5,20 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 
-from Backend.app.database import get_db
+from app.database import get_db
 
-from Backend.app.schemas.order import (
+from app.schemas.order import (
     SingleOrderCreate,
     BulkOrderCreate,
     OrderOut
 )
 
-from Backend.app.crud.order import (
+from app.crud.order import (
     create_single_order,
     create_bulk_order
 )
 
-from Backend.app.auth.oauth import get_current_user
+from app.auth.oauth import get_current_user
 
 
 router = APIRouter(

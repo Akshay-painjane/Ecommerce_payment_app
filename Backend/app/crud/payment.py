@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.payment import Payment
+from app.models.payment import Payment
 
-from Backend.app.schemas.payment import PaymentCreate
+from app.schemas.payment import PaymentCreate
 
 
 def create_payment(

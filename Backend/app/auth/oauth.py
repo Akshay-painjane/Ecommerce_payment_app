@@ -9,11 +9,11 @@ from jose import JWTError, jwt
 
 from sqlalchemy.orm import Session
 
-from Backend.app.database import get_db
+from app.database import get_db
 
-from Backend.app.models.user import User
+from app.models.user import User
 
-from Backend.app.auth.jwt import (
+from app.auth.jwt import (
     SECRET_KEY,
     ALGORITHM
 )

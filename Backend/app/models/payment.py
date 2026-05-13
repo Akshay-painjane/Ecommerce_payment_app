@@ -6,7 +6,7 @@ from sqlalchemy import (
     ForeignKey
 )
 
-from Backend.app.database import Base
+from app.database import Base
 
 
 class Payment(Base):

@@ -5,7 +5,7 @@ from sqlalchemy.orm import (
     sessionmaker
 )
 
-from Backend.app.config import settings
+from app.config import settings   # changed 
 
 
 engine = create_engine(

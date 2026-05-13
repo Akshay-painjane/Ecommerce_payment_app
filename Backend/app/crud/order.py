@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.order import Order
+from app.models.order import Order
 
-from Backend.app.models.order_item import OrderItem
+from app.models.order_item import OrderItem
 
-from Backend.app.models.product import Product
+from app.models.product import Product
 
-from Backend.app.schemas.order import (
+from app.schemas.order import (
     SingleOrderCreate,
     BulkOrderCreate
 )

@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends
 
 from sqlalchemy.orm import Session
 
-from Backend.app.database import get_db
+from app.database import get_db
 
-from Backend.app.schemas.payment import (
+from app.schemas.payment import (
     PaymentCreate,
     PaymentOut
 )
 
-from Backend.app.crud.payment import create_payment
+from app.crud.payment import create_payment
 
-from Backend.app.auth.oauth import get_current_user
+from app.auth.oauth import get_current_user
 
 
 router = APIRouter(
