@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from Backend.app.models.cart import Cart
+from app.models.cart import Cart
 
-from Backend.app.schemas.cart import CartCreate
+from app.schemas.cart import CartCreate
 
 
 def add_to_cart(
