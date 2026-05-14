@@ -25,5 +25,7 @@ class UserOut(BaseModel):
 
     email: EmailStr
 
+    role: str
+
     class Config:
         from_attributes = True

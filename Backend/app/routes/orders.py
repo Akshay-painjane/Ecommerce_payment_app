@@ -30,8 +30,9 @@ router = APIRouter(
 # Single product order
 
 @router.post(
-    "/",
-    response_model=OrderOut
+    "/single",
+    response_model=OrderOut,
+    status_code=201
 )
 def place_single_order(
     order: SingleOrderCreate,
@@ -46,11 +47,10 @@ def place_single_order(
     )
 
 
-# Bulk product order
-
 @router.post(
     "/bulk",
-    response_model=OrderOut
+    response_model=OrderOut,
+    status_code=201
 )
 def place_bulk_order(
     order: BulkOrderCreate,

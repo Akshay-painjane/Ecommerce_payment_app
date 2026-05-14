@@ -21,5 +21,9 @@ class Product(Base):
     # Foreign Key
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
 
+    # Product image
+    image_url = Column(String, nullable=True)
+
+
     # relationship with Category
     category = relationship("Category", back_populates="products")

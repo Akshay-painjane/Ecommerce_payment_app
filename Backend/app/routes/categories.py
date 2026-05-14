@@ -14,7 +14,7 @@ from app.crud.category import (
     get_categories
 )
 
-from app.auth.oauth import get_current_user
+from app.dependencies.role_checker import admin_required
 
 
 router = APIRouter(
@@ -30,7 +30,7 @@ router = APIRouter(
 def create_new_category(
     category: CategoryCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(admin_required)
 ):
 
     return create_category(
