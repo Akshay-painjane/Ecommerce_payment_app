@@ -11,6 +11,8 @@ class ProductCreate(BaseModel):
 
     stock: int
 
+    category_id: int
+
 
 class ProductUpdate(BaseModel):
 
@@ -21,6 +23,8 @@ class ProductUpdate(BaseModel):
     price: float
 
     stock: int
+
+    category_id: int
 
 
 class ProductOut(BaseModel):
@@ -34,6 +38,8 @@ class ProductOut(BaseModel):
     price: float
 
     stock: int
+
+    category_id: int
 
     class Config:
         from_attributes = True

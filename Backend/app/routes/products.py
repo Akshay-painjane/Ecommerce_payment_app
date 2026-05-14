@@ -37,7 +37,15 @@ def create_new_product(
     current_user = Depends(get_current_user)
 ):
 
-    return create_product(db, product)
+    db_product = create_product(db, product)
+
+    if not db_product:
+        raise HTTPException(
+            status_code=404,
+            detail="Category not found"
+        )
+
+    return db_product
 
 
 @router.get(
