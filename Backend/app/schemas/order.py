@@ -34,6 +34,8 @@ class OrderOut(BaseModel):
 
     total_price: float
 
+    status: str
+
     items: list[OrderItemOut]
 
     class Config:

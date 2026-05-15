@@ -2,6 +2,7 @@ from sqlalchemy import (
     Column,
     Integer,
     Float,
+    String,
     ForeignKey
 )
 
@@ -22,6 +23,11 @@ class Order(Base):
     )
 
     total_price = Column(Float)
+
+    status = Column(
+        String,
+        default="PENDING"
+    )
 
     items = relationship(
         "OrderItem",
