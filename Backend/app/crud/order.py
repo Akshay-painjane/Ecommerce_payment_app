@@ -1,9 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.order import Order
-
 from app.models.order_item import OrderItem
-
 from app.models.product import Product
 
 from app.schemas.order import (
@@ -12,7 +10,9 @@ from app.schemas.order import (
 )
 
 
+# -----------------------------
 # Single Product Order
+# -----------------------------
 
 def create_single_order(
     db: Session,
@@ -36,9 +36,12 @@ def create_single_order(
         product.price * order.quantity
     )
 
+    # Create order
+
     db_order = Order(
         user_id=user_id,
-        total_price=total_price
+        total_price=total_price,
+        status="PENDING"
     )
 
     db.add(db_order)
@@ -69,7 +72,9 @@ def create_single_order(
     return db_order
 
 
+# -----------------------------
 # Bulk Product Order
+# -----------------------------
 
 def create_bulk_order(
     db: Session,
@@ -107,7 +112,8 @@ def create_bulk_order(
 
     db_order = Order(
         user_id=user_id,
-        total_price=total_price
+        total_price=total_price,
+        status="PENDING"
     )
 
     db.add(db_order)
@@ -128,6 +134,8 @@ def create_bulk_order(
 
         product.stock -= item.quantity
 
+        # Create order item
+
         order_item = OrderItem(
             order_id=db_order.id,
             product_id=product.id,
@@ -142,3 +150,55 @@ def create_bulk_order(
     db.refresh(db_order)
 
     return db_order
+
+
+# -----------------------------
+# Get Single Order
+# -----------------------------
+
+def get_single_order(
+    db: Session,
+    order_id: int
+):
+
+    return db.query(Order).filter(
+        Order.id == order_id
+    ).first()
+
+
+# -----------------------------
+# Get All Orders
+# -----------------------------
+
+def get_all_orders(
+    db: Session
+):
+
+    return db.query(Order).all()
+
+
+# -----------------------------
+# Update Order Status
+# -----------------------------
+
+def update_order_status(
+    db: Session,
+    order_id: int,
+    status: str
+):
+
+    order = db.query(Order).filter(
+        Order.id == order_id
+    ).first()
+
+    if not order:
+
+        raise Exception("Order not found")
+
+    order.status = status
+
+    db.commit()
+
+    db.refresh(order)
+
+    return order
