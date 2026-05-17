@@ -167,6 +167,20 @@ def get_single_order(
 
 
 # -----------------------------
+# Get User Orders
+# -----------------------------
+
+def get_user_orders(
+    db: Session,
+    user_id: int
+):
+
+    return db.query(Order).filter(
+        Order.user_id == user_id
+    ).all()
+
+
+# -----------------------------
 # Get All Orders
 # -----------------------------
 
@@ -193,7 +207,7 @@ def update_order_status(
 
     if not order:
 
-        raise Exception("Order not found")
+        return None
 
     order.status = status
 
