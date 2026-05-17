@@ -40,7 +40,7 @@ def upload_product_image(
         shutil.copyfileobj(file.file, buffer)
 
     return {
-        "image_url": f"/static/products/{file.filename}"
+        "image_url": f"http://127.0.0.1:8000/static/products/{file.filename}"
     }
 
 @router.post(

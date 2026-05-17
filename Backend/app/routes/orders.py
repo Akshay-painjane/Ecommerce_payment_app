@@ -1,6 +1,7 @@
 from fastapi import (
     APIRouter,
-    Depends
+    Depends,
+    HTTPException
 )
 
 from sqlalchemy.orm import Session
@@ -15,10 +16,15 @@ from app.schemas.order import (
 
 from app.crud.order import (
     create_single_order,
-    create_bulk_order
+    create_bulk_order,
+    get_user_orders,
+    get_all_orders,
+    update_order_status
 )
 
 from app.auth.oauth import get_current_user
+
+from app.dependencies.role_checker import admin_required
 
 
 router = APIRouter(
@@ -27,7 +33,9 @@ router = APIRouter(
 )
 
 
+# -----------------------------
 # Single product order
+# -----------------------------
 
 @router.post(
     "/single",
@@ -47,6 +55,10 @@ def place_single_order(
     )
 
 
+# -----------------------------
+# Bulk product order
+# -----------------------------
+
 @router.post(
     "/bulk",
     response_model=OrderOut,
@@ -63,3 +75,71 @@ def place_bulk_order(
         current_user.id,
         order
     )
+
+
+# -----------------------------
+# Get My Orders
+# -----------------------------
+
+@router.get(
+    "/my-orders",
+    response_model=list[OrderOut]
+)
+def get_my_orders(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return get_user_orders(
+        db,
+        current_user.id
+    )
+
+
+# -----------------------------
+# Admin Get All Orders
+# -----------------------------
+
+@router.get(
+    "/all",
+    response_model=list[OrderOut]
+)
+def get_all_orders_api(
+    db: Session = Depends(get_db),
+    current_user = Depends(admin_required)
+):
+
+    return get_all_orders(db)
+
+
+# -----------------------------
+# Update Order Status
+# -----------------------------
+
+@router.put(
+    "/{order_id}/status"
+)
+def update_order_status_api(
+    order_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(admin_required)
+):
+
+    order = update_order_status(
+        db,
+        order_id,
+        status
+    )
+
+    if not order:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    return {
+        "message": "Order status updated",
+        "status": order.status
+    }
