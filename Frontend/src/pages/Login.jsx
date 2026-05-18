@@ -1,85 +1,42 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-
-const API = "http://127.0.0.1:8000";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../services/api.js";
 
 function Login() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleLogin = async () => {
+  const submit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
     try {
-      const response = await fetch(`${API}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.detail);
-        return;
-      }
-
-      localStorage.setItem("user", data.user);
-
-      navigate("/products");
-    } catch (error) {
-      alert("Backend server not running");
+      const data = await api.login(form);
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="brand">Style Store</h1>
-
-        <h2>Sign in</h2>
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter Email"
-          onChange={handleChange}
-        />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter Password"
-          onChange={handleChange}
-        />
-
-        <button onClick={handleLogin}>
-          Sign in
-        </button>
-
-        <p>
-          New customer?
-        </p>
-
-        <Link to="/register">
-          <button className="outline-btn">
-            Create your account
-          </button>
-        </Link>
-      </div>
-    </div>
+    <section className="auth-page">
+      <form className="auth-card" onSubmit={submit}>
+        <h1>Sign in</h1>
+        {error && <p className="alert">{error}</p>}
+        <label>Email<input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" required /></label>
+        <label>Password<input value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} type="password" required /></label>
+        <button disabled={loading} type="submit">{loading ? "Signing in..." : "Login"}</button>
+        <p>New customer? <Link to="/register">Create your Style Store account</Link></p>
+      </form>
+    </section>
   );
 }
 
 export default Login;
+
