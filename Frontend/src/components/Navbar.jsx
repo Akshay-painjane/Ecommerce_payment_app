@@ -1,49 +1,64 @@
-import { useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
-function Navbar({ cartCount }) {
-
+function Navbar() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
+  const onSearch = (event) => {
+    event.preventDefault();
+    const value = new FormData(event.currentTarget).get("q");
+    navigate(`/products?q=${encodeURIComponent(value || "")}`);
+  };
 
   return (
-    <header className="top-navbar">
-
-      <div
-        className="logo"
-        onClick={() => navigate("/products")}
-      >
-        Style Store
+    <header className="topbar">
+      <div className="nav-main">
+        <Link className="brand" to="/home">Style Store</Link>
+        <div className="location">
+          <span>Deliver to</span>
+          <strong>India</strong>
+        </div>
+        <form className="searchbar" onSubmit={onSearch}>
+          <select name="category" aria-label="Category">
+            <option>All</option>
+            <option>Mobiles</option>
+            <option>Fashion</option>
+            <option>Home</option>
+          </select>
+          <input name="q" placeholder="Search Style Store" />
+          <button type="submit">Search</button>
+        </form>
+        <div className="nav-actions">
+          {user ? (
+            <button className="nav-link-button" onClick={logout} type="button">
+              <span>Hello, {user.name?.split(" ")[0]}</span>
+              <strong>Logout</strong>
+            </button>
+          ) : (
+            <Link to="/login"><span>Hello, sign in</span><strong>Account</strong></Link>
+          )}
+          <Link to="/dashboard"><span>Store</span><strong>Dashboard</strong></Link>
+          <Link to="/admin"><span>Admin</span><strong>Dashboard</strong></Link>
+          <Link className="cart-link" to="/cart"><span>Cart</span><strong>Basket</strong></Link>
+        </div>
       </div>
-
-      <div className="search-box">
-        <input placeholder="Search products" />
-
-        <button>🔍</button>
-      </div>
-
-      <div className="nav-item">
-        <span>Hello</span>
-
-        <b>
-          {localStorage.getItem("user")}
-        </b>
-      </div>
-
-      <div
-        className="cart"
-        onClick={() => navigate("/checkout")}
-      >
-        🛒 Cart ({cartCount})
-      </div>
-
-      <button
-        className="logout"
-        onClick={() => {
-          localStorage.clear();
-          navigate("/");
-        }}
-      >
-        Logout
-      </button>
+      <nav className="nav-strip">
+        <NavLink to="/home">Home</NavLink>
+        <NavLink to="/dashboard">Dashboard</NavLink>
+        <NavLink to="/products">Categories</NavLink>
+        <NavLink to="/products?category=Mobiles">Mobiles</NavLink>
+        <NavLink to="/products?category=Electronics">Electronics</NavLink>
+        <NavLink to="/products?category=Fashion">Fashion</NavLink>
+        <NavLink to="/products?category=Home">Home</NavLink>
+        <NavLink to="/products?category=Beauty">Beauty</NavLink>
+        <NavLink to="/products?category=Grocery">Grocery</NavLink>
+      </nav>
     </header>
   );
 }
