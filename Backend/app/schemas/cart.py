@@ -1,11 +1,15 @@
 from pydantic import BaseModel
 
+from app.schemas.product import ProductOut
+
 
 class CartCreate(BaseModel):
 
     product_id: int
 
     quantity: int
+
+    product: ProductOut | None = None
 
 
 class BulkCartCreate(BaseModel):

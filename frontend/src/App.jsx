@@ -14,6 +14,15 @@ import Payment from "./pages/Payment.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminAddProduct from "./pages/AdminAddProduct.jsx";
 import AdminProducts from "./pages/AdminProducts.jsx";
+import { auth } from "./services/api.js";
+
+function ProtectedRoute({ children }) {
+  if (!auth.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
 
 function App() {
   return (
@@ -27,14 +36,16 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/categories" element={<Categories />} />
+          <Route path="/category/:categoryName" element={<Products />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/products/:id" element={<ProductDetails />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/add-product" element={<AdminAddProduct />} />
-          <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+          <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/add-product" element={<ProtectedRoute><AdminAddProduct /></ProtectedRoute>} />
+          <Route path="/admin/products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </main>

@@ -1,49 +1,119 @@
+import axios from "axios";
+
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-const getToken = () => localStorage.getItem("token");
+export const tokenStore = {
+  getAccess: () => localStorage.getItem("access_token") || localStorage.getItem("token"),
+  getRefresh: () => localStorage.getItem("refresh_token"),
+  setTokens: ({ access_token, refresh_token }) => {
+    if (access_token) {
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("token", access_token);
+    }
+    if (refresh_token) {
+      localStorage.setItem("refresh_token", refresh_token);
+    }
+  },
+  clear: () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  },
+};
 
-async function request(path, options = {}) {
-  const headers = { ...(options.headers || {}) };
-  const isFormData = options.body instanceof FormData;
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  if (!isFormData) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const token = getToken();
+apiClient.interceptors.request.use((config) => {
+  const token = tokenStore.getAccess();
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+let refreshPromise = null;
 
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-  if (!response.ok) {
-    throw new Error(data?.detail || "Something went wrong");
+    if (error.response?.status !== 401 || originalRequest?._retry) {
+      return Promise.reject(error);
+    }
+
+    const refreshToken = tokenStore.getRefresh();
+    if (!refreshToken) {
+      tokenStore.clear();
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      refreshPromise = refreshPromise || axios.post(`${API_BASE_URL}/auth/refresh`, {
+        refresh_token: refreshToken,
+      });
+      const { data } = await refreshPromise;
+      refreshPromise = null;
+      tokenStore.setTokens({ access_token: data.access_token });
+      originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
+      return apiClient(originalRequest);
+    } catch (refreshError) {
+      refreshPromise = null;
+      tokenStore.clear();
+      window.location.href = "/login";
+      return Promise.reject(refreshError);
+    }
   }
+);
 
-  return data;
-}
+const unwrap = (promise) => promise.then((response) => response.data).catch((error) => {
+  const detail = error.response?.data?.detail;
+  throw new Error(Array.isArray(detail) ? detail.map((item) => item.msg).join(", ") : detail || error.message || "Something went wrong");
+});
+
+export const auth = {
+  saveSession: (data) => {
+    tokenStore.setTokens(data);
+    if (data.user) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+  },
+  getUser: () => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      tokenStore.clear();
+      return null;
+    }
+  },
+  logout: () => tokenStore.clear(),
+  isAuthenticated: () => Boolean(tokenStore.getAccess()),
+};
 
 export const api = {
-  login: (payload) => request("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
-  register: (payload) => request("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
-  getProducts: () => request("/products"),
-  getProduct: (id) => request(`/products/${id}`),
-  createProduct: (payload) => request("/products", { method: "POST", body: JSON.stringify(payload) }),
-  updateProduct: (id, payload) => request(`/products/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
-  deleteProduct: (id) => request(`/products/${id}`, { method: "DELETE" }),
-  getCart: () => request("/cart"),
-  addToCart: (payload) => request("/cart", { method: "POST", body: JSON.stringify(payload) }),
-  removeCartItem: (id) => request(`/cart/${id}`, { method: "DELETE" }),
-  createOrder: (payload) => request("/orders", { method: "POST", body: JSON.stringify(payload) }),
-  getOrders: () => request("/orders"),
-  dummyPayment: (payload) => request("/payments/dummy", { method: "POST", body: JSON.stringify(payload) }),
+  login: (payload) => unwrap(apiClient.post("/auth/login", payload)),
+  register: (payload) => unwrap(apiClient.post("/auth/register", payload)),
+  refresh: (refresh_token) => unwrap(apiClient.post("/auth/refresh", { refresh_token })),
+  me: () => unwrap(apiClient.get("/auth/me")),
+  getProducts: () => unwrap(apiClient.get("/products")),
+  getProduct: (id) => unwrap(apiClient.get(`/products/${id}`)),
+  createProduct: (payload) => unwrap(apiClient.post("/products", payload)),
+  updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload)),
+  deleteProduct: (id) => unwrap(apiClient.delete(`/products/${id}`)),
+  getCart: () => unwrap(apiClient.get("/cart")),
+  addToCart: (payload) => unwrap(apiClient.post("/cart", payload)),
+  removeCartItem: (id) => unwrap(apiClient.delete(`/cart/${id}`)),
+  createOrder: (payload) => unwrap(apiClient.post("/orders", payload)),
+  getOrders: () => unwrap(apiClient.get("/orders")),
+  dummyPayment: (payload) => unwrap(apiClient.post("/payments/dummy", payload)),
 };
 
 export const categories = [
@@ -54,4 +124,3 @@ export const categories = [
   { id: 5, name: "Beauty", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80" },
   { id: 6, name: "Grocery", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
 ];
-

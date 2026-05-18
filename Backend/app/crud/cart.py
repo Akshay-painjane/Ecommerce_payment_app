@@ -11,13 +11,21 @@ def add_to_cart(
     cart: CartCreate
 ):
 
-    db_cart = Cart(
-        user_id=user_id,
-        product_id=cart.product_id,
-        quantity=cart.quantity
-    )
+    db_cart = db.query(Cart).filter(
+        Cart.user_id == user_id,
+        Cart.product_id == cart.product_id
+    ).first()
 
-    db.add(db_cart)
+    if db_cart:
+        db_cart.quantity += cart.quantity
+    else:
+        db_cart = Cart(
+            user_id=user_id,
+            product_id=cart.product_id,
+            quantity=cart.quantity
+        )
+
+        db.add(db_cart)
 
     db.commit()
 
@@ -57,3 +65,22 @@ def get_user_cart(
     return db.query(Cart).filter(
         Cart.user_id == user_id
     ).all()
+
+
+def remove_from_cart(
+    db: Session,
+    user_id: int,
+    cart_id: int
+):
+    db_cart = db.query(Cart).filter(
+        Cart.id == cart_id,
+        Cart.user_id == user_id
+    ).first()
+
+    if not db_cart:
+        return None
+
+    db.delete(db_cart)
+    db.commit()
+
+    return db_cart

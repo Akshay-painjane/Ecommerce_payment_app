@@ -18,6 +18,8 @@ class Product(Base):
 
     stock = Column(Integer, default=0)
 
+    rating = Column(Float, default=4.5)
+
     # Foreign Key
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
 

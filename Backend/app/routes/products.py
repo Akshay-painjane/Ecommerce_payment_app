@@ -21,17 +21,15 @@ from app.crud.product import (
     delete_product
 )
 
-from app.dependencies.role_checker import admin_required
-
-
 router = APIRouter(
     prefix="/products",
     tags=["Products"]
 )
+
+
 @router.post("/upload-image")
 def upload_product_image(
-    file: UploadFile = File(...),
-    current_user = Depends(admin_required)
+    file: UploadFile = File(...)
 ):
 
     file_path = f"static/products/{file.filename}"
@@ -44,13 +42,16 @@ def upload_product_image(
     }
 
 @router.post(
+    "",
+    response_model=ProductOut
+)
+@router.post(
     "/",
     response_model=ProductOut
 )
 def create_new_product(
     product: ProductCreate,
-    db: Session = Depends(get_db),
-    current_user = Depends(admin_required)
+    db: Session = Depends(get_db)
 ):
 
     db_product = create_product(db, product)
@@ -64,6 +65,10 @@ def create_new_product(
     return db_product
 
 
+@router.get(
+    "",
+    response_model=list[ProductOut]
+)
 @router.get(
     "/",
     response_model=list[ProductOut]
@@ -106,8 +111,7 @@ def get_single_product(
 def update_single_product(
     product_id: int,
     product: ProductUpdate,
-    db: Session = Depends(get_db),
-    current_user = Depends(admin_required)
+    db: Session = Depends(get_db)
 ):
 
     updated_product = update_product(
@@ -131,8 +135,7 @@ def update_single_product(
 )
 def delete_single_product(
     product_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(admin_required)
+    db: Session = Depends(get_db)
 ):
 
     deleted_product = delete_product(

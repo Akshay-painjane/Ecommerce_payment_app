@@ -9,12 +9,21 @@ class UserCreate(BaseModel):
 
     password: str
 
+    phone: str | None = None
+
+    profile_image: str | None = None
+
 
 class UserLogin(BaseModel):
 
     email: EmailStr
 
     password: str
+
+
+class RefreshTokenRequest(BaseModel):
+
+    refresh_token: str
 
 
 class UserOut(BaseModel):
@@ -26,6 +35,10 @@ class UserOut(BaseModel):
     email: EmailStr
 
     role: str
+
+    phone: str | None = None
+
+    profile_image: str | None = None
 
     class Config:
         from_attributes = True
