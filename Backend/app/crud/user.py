@@ -20,7 +20,9 @@ def create_user(
         name=user.name,
         email=user.email,
         password=hashed_password,
-        role="user"
+        role="user",
+        phone=user.phone,
+        profile_image=user.profile_image
     )
 
     db.add(db_user)

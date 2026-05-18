@@ -13,7 +13,8 @@ from app.schemas.cart import (
 from app.crud.cart import (
     add_to_cart,
     get_user_cart,
-    bulk_add_to_cart
+    bulk_add_to_cart,
+    remove_from_cart
 )
 
 from app.auth.oauth import get_current_user
@@ -27,6 +28,10 @@ router = APIRouter(
 
 # Add single product to cart
 
+@router.post(
+    "",
+    response_model=CartOut
+)
 @router.post(
     "/",
     response_model=CartOut
@@ -63,6 +68,10 @@ def bulk_cart_add(
 # Get user cart
 
 @router.get(
+    "",
+    response_model=list[CartOut]
+)
+@router.get(
     "/",
     response_model=list[CartOut]
 )
@@ -75,3 +84,25 @@ def get_cart(
         db,
         current_user.id
     )
+
+
+@router.delete("/{cart_id}")
+def delete_cart_item(
+    cart_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    deleted = remove_from_cart(
+        db,
+        current_user.id,
+        cart_id
+    )
+
+    if not deleted:
+        return {
+            "message": "Cart item not found"
+        }
+
+    return {
+        "message": "Cart item removed"
+    }

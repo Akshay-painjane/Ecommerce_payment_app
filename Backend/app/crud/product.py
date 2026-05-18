@@ -28,7 +28,8 @@ def create_product(
         price=product.price,
         stock=product.stock,
         category_id=product.category_id,
-        image_url=product.image_url
+        image_url=product.image_url,
+        rating=product.rating
     )
 
     db.add(db_product)
@@ -94,6 +95,9 @@ def update_product(
 
     if product.image_url is not None:
         db_product.image_url = product.image_url
+
+    if product.rating is not None:
+        db_product.rating = product.rating
 
     db.commit()
 

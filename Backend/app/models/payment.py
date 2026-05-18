@@ -26,3 +26,7 @@ class Payment(Base):
         String,
         default="pending"
     )
+
+    method = Column(String, default="Cash on Delivery")
+
+    receipt_id = Column(String, nullable=True)

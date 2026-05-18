@@ -4,11 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
-from app.schemas.user import UserLogin
+from app.schemas.user import RefreshTokenRequest, UserCreate, UserLogin, UserOut
 
-from app.crud.user import get_user_by_email
+from app.crud.user import create_user, get_user_by_email
 
 from app.auth.hashing import verify_password
+from app.auth.oauth import get_current_user
 
 from jose import JWTError, jwt
 
@@ -25,6 +26,33 @@ router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
+
+
+def user_payload(db_user):
+    return {
+        "id": db_user.id,
+        "name": db_user.name,
+        "email": db_user.email,
+        "role": db_user.role,
+        "phone": db_user.phone,
+        "profile_image": db_user.profile_image
+    }
+
+
+@router.post("/register", response_model=UserOut)
+def register(
+    user: UserCreate,
+    db: Session = Depends(get_db)
+):
+    existing_user = get_user_by_email(db, user.email)
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User already exists"
+        )
+
+    return create_user(db, user)
 
 
 @router.post("/login")
@@ -69,17 +97,25 @@ def login(
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": user_payload(db_user)
     }
+
+
+@router.get("/me")
+def me(current_user = Depends(get_current_user)):
+    return user_payload(current_user)
+
+
 @router.post("/refresh")
 def refresh_access_token(
-    refresh_token: str
+    payload: RefreshTokenRequest
 ):
 
     try:
 
         payload = jwt.decode(
-            refresh_token,
+            payload.refresh_token,
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )

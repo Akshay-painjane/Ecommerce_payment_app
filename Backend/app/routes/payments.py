@@ -21,6 +21,10 @@ router = APIRouter(
 
 
 @router.post(
+    "",
+    response_model=PaymentOut
+)
+@router.post(
     "/",
     response_model=PaymentOut
 )
@@ -31,7 +35,22 @@ def create_new_payment(
 ):
 
     return create_payment(
-    db,
-    payment,
-    current_user.id
+        db,
+        payment
+    )
+
+
+@router.post(
+    "/dummy",
+    response_model=PaymentOut
 )
+def create_dummy_payment(
+    payment: PaymentCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return create_payment(
+        db,
+        payment
+    )

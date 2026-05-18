@@ -1,12 +1,12 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { auth } from "../services/api.js";
 
 function Navbar() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = auth.getUser();
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    auth.logout();
     navigate("/");
   };
 

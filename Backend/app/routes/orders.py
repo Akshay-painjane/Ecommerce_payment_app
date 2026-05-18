@@ -33,6 +33,29 @@ router = APIRouter(
 )
 
 
+@router.post(
+    "",
+    response_model=OrderOut,
+    status_code=201
+)
+@router.post(
+    "/",
+    response_model=OrderOut,
+    status_code=201
+)
+def place_order(
+    order: BulkOrderCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return create_bulk_order(
+        db,
+        current_user.id,
+        order
+    )
+
+
 # -----------------------------
 # Single product order
 # -----------------------------
@@ -80,6 +103,25 @@ def place_bulk_order(
 # -----------------------------
 # Get My Orders
 # -----------------------------
+
+@router.get(
+    "",
+    response_model=list[OrderOut]
+)
+@router.get(
+    "/",
+    response_model=list[OrderOut]
+)
+def get_orders(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    return get_user_orders(
+        db,
+        current_user.id
+    )
+
 
 @router.get(
     "/my-orders",

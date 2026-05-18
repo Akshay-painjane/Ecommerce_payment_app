@@ -16,3 +16,7 @@ class User(Base):
     password = Column(String, nullable=False)
 
     role = Column(String, default="user", nullable=False)
+
+    phone = Column(String, nullable=True)
+
+    profile_image = Column(String, nullable=True)

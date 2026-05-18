@@ -5,11 +5,12 @@ from sqlalchemy import (
 )
 
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 
 class Cart(Base):
 
-    __tablename__ = "cart"
+    __tablename__ = "cart_items"
 
     id = Column(Integer, primary_key=True)
 
@@ -24,3 +25,5 @@ class Cart(Base):
     )
 
     quantity = Column(Integer, default=1)
+
+    product = relationship("Product")

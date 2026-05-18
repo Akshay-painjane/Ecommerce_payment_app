@@ -7,6 +7,8 @@ class PaymentCreate(BaseModel):
 
     amount: float
 
+    method: str = "Cash on Delivery"
+
 
 class PaymentOut(BaseModel):
 
@@ -17,6 +19,10 @@ class PaymentOut(BaseModel):
     amount: float
 
     status: str
+
+    method: str
+
+    receipt_id: str | None = None
 
     class Config:
         from_attributes = True
