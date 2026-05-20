@@ -119,6 +119,96 @@ const unwrap = (promise) => promise.then((response) => response.data).catch((err
   throw new Error(Array.isArray(detail) ? detail.map((item) => item.msg).join(", ") : detail || error.message || "Something went wrong");
 });
 
+const CART_STORAGE_KEY = "cart_items";
+
+const normalizeCartProduct = (product) => {
+  if (!product || typeof product !== "object") {
+    return null;
+  }
+
+  const id = product.id ?? product.product_id;
+
+  return {
+    ...product,
+    id,
+    name: product.name || product.title || "Product",
+    title: product.title || product.name || "Product",
+    description: product.description || "",
+    price: product.price === undefined || product.price === null || product.price === "" ? null : Number(product.price),
+    image: product.image || product.img || product.image_url || "",
+    img: product.img || product.image || product.image_url || "",
+    image_url: product.image_url || product.image || product.img || "",
+    category: product.category || product.category_name || product.category_id || "",
+    rating: product.rating ?? 4.5,
+  };
+};
+
+const readLocalCart = () => {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    localStorage.removeItem(CART_STORAGE_KEY);
+    return [];
+  }
+};
+
+const writeLocalCart = (items) => {
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+};
+
+export const cartStore = {
+  getItems: readLocalCart,
+  saveProduct: (product, quantity = 1) => {
+    const normalizedProduct = normalizeCartProduct(product);
+
+    if (!normalizedProduct?.id) {
+      return readLocalCart();
+    }
+
+    const productId = Number(normalizedProduct.id);
+    const items = readLocalCart();
+    const existingItem = items.find((item) => Number(item.product_id ?? item.product?.id ?? item.id) === productId);
+
+    if (existingItem) {
+      existingItem.quantity = Number(existingItem.quantity || 0) + Number(quantity || 1);
+      existingItem.product = {
+        ...normalizeCartProduct(existingItem.product),
+        ...normalizedProduct,
+      };
+      existingItem.product_id = productId;
+    } else {
+      items.push({
+        id: `local-${productId}`,
+        product_id: productId,
+        quantity: Number(quantity || 1),
+        product: normalizedProduct,
+      });
+    }
+
+    writeLocalCart(items);
+    return items;
+  },
+  updateQuantity: (itemId, quantity) => {
+    const items = readLocalCart().map((item) => (
+      String(item.id) === String(itemId)
+        ? { ...item, quantity: Math.max(1, Number(quantity || 1)) }
+        : item
+    ));
+    writeLocalCart(items);
+    return items;
+  },
+  removeItem: (itemId, productId) => {
+    const items = readLocalCart().filter((item) => {
+      const itemProductId = item.product_id ?? item.product?.id ?? item.id;
+      return String(item.id) !== String(itemId) && String(itemProductId) !== String(productId);
+    });
+    writeLocalCart(items);
+    return items;
+  },
+  normalizeProduct: normalizeCartProduct,
+};
+
 export const auth = {
   saveSession: (data) => {
     tokenStore.setTokens(data);
@@ -149,7 +239,26 @@ export const api = {
   updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload)),
   deleteProduct: (id) => unwrap(apiClient.delete(`/products/${id}`)),
   getCart: () => unwrap(apiClient.get("/cart")),
-  addToCart: (payload) => unwrap(apiClient.post("/cart", payload)),
+  addToCart: async (payload) => {
+    const quantity = Number(payload.quantity || 1);
+    cartStore.saveProduct(payload.product || payload, quantity);
+
+    try {
+      return await unwrap(apiClient.post("/cart", {
+        product_id: payload.product_id ?? payload.product?.id ?? payload.id,
+        quantity,
+      }));
+    } catch (error) {
+      return {
+        id: `local-${payload.product_id ?? payload.product?.id ?? payload.id}`,
+        product_id: payload.product_id ?? payload.product?.id ?? payload.id,
+        quantity,
+        product: cartStore.normalizeProduct(payload.product || payload),
+        localOnly: true,
+        error,
+      };
+    }
+  },
   removeCartItem: (id) => unwrap(apiClient.delete(`/cart/${id}`)),
   createOrder: (payload) => unwrap(apiClient.post("/orders", payload)),
   getOrders: () => unwrap(apiClient.get("/orders")),

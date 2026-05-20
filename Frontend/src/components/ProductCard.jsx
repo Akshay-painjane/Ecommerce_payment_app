@@ -3,7 +3,11 @@ import { api } from "../services/api.js";
 
 function ProductCard({ product }) {
   const addToCart = async () => {
-    await api.addToCart({ product_id: product.id, quantity: 1 });
+    await api.addToCart({
+      product_id: product.id,
+      quantity: 1,
+      product,
+    });
   };
 
   return (

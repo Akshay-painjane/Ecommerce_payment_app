@@ -21,12 +21,20 @@ function ProductDetails() {
   }, [id]);
 
   const addToCart = async () => {
-    await api.addToCart({ product_id: Number(id), quantity });
+    await api.addToCart({
+      product_id: Number(id),
+      quantity,
+      product,
+    });
     setMessage("Added to cart");
   };
 
   const buyNow = async () => {
-    await api.addToCart({ product_id: Number(id), quantity });
+    await api.addToCart({
+      product_id: Number(id),
+      quantity,
+      product,
+    });
     navigate(`/checkout?product=${id}`);
   };
 
