@@ -16,14 +16,16 @@ from app.models.payment import Payment
 #static
 from fastapi.staticfiles import StaticFiles
 #Routers
-from app.routes.users import router as user_router
+from app.routes.auth import router as user_router
 from app.routes.auth import router as auth_router
 from app.routes.products import router as product_router
 from app.routes.categories import router as category_router
 from app.routes.cart import router as cart_router
 from app.routes.orders import router as order_router
 from app.routes.payments import router as payment_router
- 
+from app.routes import google_auth
+from starlette.middleware.sessions import SessionMiddleware
+
 app = FastAPI(
     title="Ecommerce Payment App",
     version="1.0.0",
@@ -42,6 +44,10 @@ app = FastAPI(
     """
 )
 
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="your_super_secret_key"
+)
 
 def ensure_schema_columns():
     if engine.dialect.name != "postgresql":
@@ -112,14 +118,14 @@ app.add_middleware(
 )
  
 #Include Routers
-app.include_router(user_router)
+
 app.include_router(auth_router)
 app.include_router(product_router)
 app.include_router(category_router)
 app.include_router(cart_router)
 app.include_router(order_router)
 app.include_router(payment_router)
- 
+app.include_router(google_auth.router)
 #Home Route
 @app.get("/", tags=["Core"])
 def home():

@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi import UploadFile, File
 
 from sqlalchemy.orm import Session
 
+import shutil
+
 from app.database import get_db
 
-from fastapi import UploadFile, File
-import shutil
+from app.dependencies.role_checker import admin_required
+from app.auth.oauth import get_current_user
 
 from app.schemas.product import (
     ProductCreate,
@@ -29,6 +32,8 @@ router = APIRouter(
 
 @router.post("/upload-image")
 def upload_product_image(
+    current_user = Depends(get_current_user),
+    admin = Depends(admin_required),
     file: UploadFile = File(...)
 ):
 
@@ -41,22 +46,22 @@ def upload_product_image(
         "image_url": f"http://127.0.0.1:8000/static/products/{file.filename}"
     }
 
-@router.post(
-    "",
-    response_model=ProductOut
-)
+
 @router.post(
     "/",
     response_model=ProductOut
 )
 def create_new_product(
     product: ProductCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+    admin = Depends(admin_required)
 ):
 
     db_product = create_product(db, product)
 
     if not db_product:
+
         raise HTTPException(
             status_code=404,
             detail="Category not found"
@@ -65,10 +70,6 @@ def create_new_product(
     return db_product
 
 
-@router.get(
-    "",
-    response_model=list[ProductOut]
-)
 @router.get(
     "/",
     response_model=list[ProductOut]
@@ -111,7 +112,9 @@ def get_single_product(
 def update_single_product(
     product_id: int,
     product: ProductUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+    admin = Depends(admin_required)
 ):
 
     updated_product = update_product(
@@ -135,7 +138,9 @@ def update_single_product(
 )
 def delete_single_product(
     product_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+    admin = Depends(admin_required)
 ):
 
     deleted_product = delete_product(

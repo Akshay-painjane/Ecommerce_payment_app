@@ -114,13 +114,13 @@ def refresh_access_token(
 
     try:
 
-        payload = jwt.decode(
+        decoded_payload = jwt.decode(
             payload.refresh_token,
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
 
-        email = payload.get("sub")
+        email = decoded_payload.get("sub")
 
         if email is None:
 
