@@ -16,16 +16,11 @@ function Products() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    setLoading(true);
     api.getProducts()
       .then(setProducts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchParams, search, sort]);
 
   const filtered = useMemo(() => {
     const query = (searchParams.get("q") || search).toLowerCase();
@@ -47,7 +42,8 @@ function Products() {
   }, [products, searchParams, routeCategoryName, search, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const visibleProducts = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const currentPage = Math.min(page, pageCount);
+  const visibleProducts = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <section className="page-section">
@@ -59,8 +55,21 @@ function Products() {
       </div>
 
       <div className="catalog-tools">
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search in this category" />
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+        <input
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search in this category"
+        />
+        <select
+          value={sort}
+          onChange={(e) => {
+            setSort(e.target.value);
+            setPage(1);
+          }}
+        >
           <option value="featured">Featured</option>
           <option value="price-low">Price: Low to High</option>
           <option value="price-high">Price: High to Low</option>
@@ -78,9 +87,9 @@ function Products() {
         <>
           <div className="products-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div>
           <div className="pagination">
-            <button disabled={page === 1} onClick={() => setPage((value) => value - 1)} type="button">Previous</button>
-            <span>Page {page} of {pageCount}</span>
-            <button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)} type="button">Next</button>
+            <button disabled={currentPage === 1} onClick={() => setPage((value) => value - 1)} type="button">Previous</button>
+            <span>Page {currentPage} of {pageCount}</span>
+            <button disabled={currentPage === pageCount} onClick={() => setPage((value) => value + 1)} type="button">Next</button>
           </div>
         </>
       )}
