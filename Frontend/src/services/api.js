@@ -22,6 +22,42 @@ export const tokenStore = {
   },
 };
 
+const normalizeUser = (user) => {
+  if (!user || typeof user !== "object" || Array.isArray(user)) {
+    return null;
+  }
+
+  return {
+    ...user,
+    role: user.role || "user",
+  };
+};
+
+const getStoredUser = () => {
+  const rawUser = localStorage.getItem("user");
+
+  if (!rawUser || rawUser === "undefined" || rawUser === "null") {
+    if (rawUser === "undefined" || rawUser === "null") {
+      localStorage.removeItem("user");
+    }
+
+    return null;
+  }
+
+  try {
+    const user = normalizeUser(JSON.parse(rawUser));
+
+    if (!user) {
+      localStorage.removeItem("user");
+    }
+
+    return user;
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
+};
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -44,7 +80,12 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status !== 401 || originalRequest?._retry) {
+    if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    if (originalRequest.url?.includes("/auth/login") || originalRequest.url?.includes("/auth/refresh")) {
+      tokenStore.clear();
       return Promise.reject(error);
     }
 
@@ -68,7 +109,6 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       refreshPromise = null;
       tokenStore.clear();
-      window.location.href = "/login";
       return Promise.reject(refreshError);
     }
   }
@@ -82,20 +122,20 @@ const unwrap = (promise) => promise.then((response) => response.data).catch((err
 export const auth = {
   saveSession: (data) => {
     tokenStore.setTokens(data);
-    if (data.user) {
-      localStorage.setItem("user", JSON.stringify(data.user));
+
+    const user = normalizeUser(data.user);
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("user");
     }
+
+    return user;
   },
-  getUser: () => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      tokenStore.clear();
-      return null;
-    }
-  },
+  getUser: getStoredUser,
   logout: () => tokenStore.clear(),
   isAuthenticated: () => Boolean(tokenStore.getAccess()),
+  hasRole: (role) => getStoredUser()?.role === role,
 };
 
 export const api = {

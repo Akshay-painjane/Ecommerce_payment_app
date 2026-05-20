@@ -4,24 +4,44 @@ import { api, auth } from "../services/api.js";
 
 function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const update = (event) => {
-    setForm({ ...form, [event.target.name]: event.target.value });
+    setForm({
+      ...form,
+      [event.target.name]: event.target.value,
+    });
   };
 
   const submit = async (event) => {
     event.preventDefault();
+
     setLoading(true);
     setError("");
 
     try {
-      const data = await api.login(form);
-      auth.saveSession(data);
-      navigate("/home");
+      const data = await api.login({
+        email: form.email,
+        password: form.password,
+      });
+
+      const savedUser = auth.saveSession(data);
+
+      const loggedUser = savedUser || auth.getUser() || { role: "user" };
+
+      if (loggedUser.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -33,21 +53,43 @@ function Login() {
     <section className="auth-page auth-gradient">
       <form className="auth-card glass-card login-card" onSubmit={submit}>
         <div className="auth-logo">Style Store</div>
+
         <h1>Welcome back</h1>
-        <p className="auth-subtitle">Sign in to continue shopping, track orders, and manage your cart.</p>
+
+        <p className="auth-subtitle">
+          Sign in to continue shopping, track orders, and manage your cart.
+        </p>
 
         {error && <p className="alert">{error}</p>}
 
         <label>
           Email
-          <input name="email" value={form.email} onChange={update} type="email" placeholder="you@example.com" required />
+          <input
+            name="email"
+            value={form.email}
+            onChange={update}
+            type="email"
+            placeholder="you@example.com"
+            required
+          />
         </label>
 
         <label>
           Password
           <div className="password-field">
-            <input name="password" value={form.password} onChange={update} type={showPassword ? "text" : "password"} placeholder="Enter password" required />
-            <button type="button" onClick={() => setShowPassword((value) => !value)}>
+            <input
+              name="password"
+              value={form.password}
+              onChange={update}
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter password"
+              required
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+            >
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
@@ -63,7 +105,10 @@ function Login() {
         </div>
 
         <p className="auth-switch">
-          New customer? <Link to="/register">Create your Style Store account</Link>
+          New customer?{" "}
+          <Link to="/register">
+            Create your Style Store account
+          </Link>
         </p>
       </form>
     </section>
