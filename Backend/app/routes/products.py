@@ -1,13 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import UploadFile, File
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    Form
+)
 
 from sqlalchemy.orm import Session
 
-import shutil
+import cloudinary.uploader
+
+from app.cloudinary_config import *
 
 from app.database import get_db
 
 from app.dependencies.role_checker import admin_required
+
 from app.auth.oauth import get_current_user
 
 from app.schemas.product import (
@@ -30,35 +39,65 @@ router = APIRouter(
 )
 
 
-@router.post("/upload-image")
-def upload_product_image(
-    current_user = Depends(get_current_user),
-    admin = Depends(admin_required),
-    file: UploadFile = File(...)
-):
-
-    file_path = f"static/products/{file.filename}"
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {
-        "image_url": f"http://127.0.0.1:8000/static/products/{file.filename}"
-    }
-
+# -----------------------------
+# Create Product + Upload Image
+# -----------------------------
 
 @router.post(
     "/",
     response_model=ProductOut
 )
 def create_new_product(
-    product: ProductCreate,
+
+    name: str = Form(...),
+
+    description: str = Form(None),
+
+    price: float = Form(...),
+
+    stock: int = Form(...),
+
+    category_id: int = Form(...),
+
+    rating: float = Form(4.5),
+
+    file: UploadFile = File(...),
+
     db: Session = Depends(get_db),
+
     current_user = Depends(get_current_user),
+
     admin = Depends(admin_required)
+
 ):
 
-    db_product = create_product(db, product)
+    upload_result = cloudinary.uploader.upload(
+        file.file
+    )
+
+    image_url = upload_result["secure_url"]
+
+    product_data = ProductCreate(
+
+        name=name,
+
+        description=description,
+
+        price=price,
+
+        stock=stock,
+
+        category_id=category_id,
+
+        image_url=image_url,
+
+        rating=rating
+    )
+
+    db_product = create_product(
+        db,
+        product_data
+    )
 
     if not db_product:
 
@@ -70,6 +109,10 @@ def create_new_product(
     return db_product
 
 
+# -----------------------------
+# Get All Products
+# -----------------------------
+
 @router.get(
     "/",
     response_model=list[ProductOut]
@@ -80,6 +123,10 @@ def get_products(
 
     return get_all_products(db)
 
+
+# -----------------------------
+# Get Single Product
+# -----------------------------
 
 @router.get(
     "/{product_id}",
@@ -104,6 +151,10 @@ def get_single_product(
 
     return product
 
+
+# -----------------------------
+# Update Product
+# -----------------------------
 
 @router.put(
     "/{product_id}",
@@ -132,6 +183,10 @@ def update_single_product(
 
     return updated_product
 
+
+# -----------------------------
+# Delete Product
+# -----------------------------
 
 @router.delete(
     "/{product_id}"

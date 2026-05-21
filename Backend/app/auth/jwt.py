@@ -23,8 +23,9 @@ def create_access_token(data: dict):
     )
 
     to_encode.update({
-        "exp": expire
-    })
+    "exp": expire,
+    "type": "access"
+  })
 
     encoded_jwt = jwt.encode(
         to_encode,
@@ -42,7 +43,8 @@ def create_refresh_token(data: dict):
     )
 
     to_encode.update({
-        "exp": expire
+    "exp": expire,
+    "type": "refresh"
     })
 
     encoded_jwt = jwt.encode(
