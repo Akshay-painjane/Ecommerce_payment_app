@@ -12,7 +12,8 @@ from app.auth.hashing import verify_password
 from app.auth.oauth import get_current_user
 
 from jose import JWTError, jwt
-
+from fastapi import BackgroundTasks
+from app.utils.email_service import send_email
 from app.auth.jwt import (
     create_access_token,
     create_refresh_token,
@@ -38,10 +39,10 @@ def user_payload(db_user):
         "profile_image": db_user.profile_image
     }
 
-
 @router.post("/register", response_model=UserOut)
 def register(
     user: UserCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     existing_user = get_user_by_email(db, user.email)
@@ -52,8 +53,21 @@ def register(
             detail="User already exists"
         )
 
-    return create_user(db, user)
+    new_user = create_user(db, user)
 
+    # trigger background email event
+    background_tasks.add_task(
+        send_email,
+        new_user.email,
+        "Welcome to Style Store",
+        f"""
+        <h2>Hello {new_user.name}</h2>
+        <p>Your account has been created successfully.</p>
+        <p>Welcome to Style Store.</p>
+        """
+    )
+
+    return new_user
 
 @router.post("/login")
 def login(
