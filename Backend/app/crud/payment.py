@@ -8,12 +8,14 @@ from app.schemas.payment import PaymentCreate
 
 def create_payment(
     db: Session,
-    payment: PaymentCreate
+    payment: PaymentCreate,
+    user_id: int
 ):
     receipt_id = f"SS-{payment.order_id:06d}"
 
     db_payment = Payment(
         order_id=payment.order_id,
+        user_id=user_id,
         amount=payment.amount,
         method=payment.method,
         status="success",

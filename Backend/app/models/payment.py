@@ -19,7 +19,10 @@ class Payment(Base):
         Integer,
         ForeignKey("orders.id")
     )
-
+    user_id = Column(
+    Integer,
+    ForeignKey("users.id")
+    )
     amount = Column(Float)
 
     status = Column(
