@@ -70,6 +70,9 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
   return config;
 });
 
@@ -233,9 +236,21 @@ export const api = {
   register: (payload) => unwrap(apiClient.post("/auth/register", payload)),
   refresh: (refresh_token) => unwrap(apiClient.post("/auth/refresh", { refresh_token })),
   me: () => unwrap(apiClient.get("/auth/me")),
-  getProducts: () => unwrap(apiClient.get("/products")),
+  getProducts: () => unwrap(apiClient.get("/products/")),
   getProduct: (id) => unwrap(apiClient.get(`/products/${id}`)),
-  createProduct: (payload) => unwrap(apiClient.post("/products", payload)),
+  createProduct: (payload) => {
+    const formData = payload instanceof FormData ? payload : new FormData();
+
+    if (!(payload instanceof FormData)) {
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value);
+        }
+      });
+    }
+
+    return unwrap(apiClient.post("/products/", formData));
+  },
   updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload)),
   deleteProduct: (id) => unwrap(apiClient.delete(`/products/${id}`)),
   getCart: () => unwrap(apiClient.get("/cart")),
