@@ -121,6 +121,14 @@ def refresh_access_token(
         )
 
         email = decoded_payload.get("sub")
+        token_type = decoded_payload.get("type")
+
+        if token_type != "refresh":
+
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid refresh token"
+            )
 
         if email is None:
 
