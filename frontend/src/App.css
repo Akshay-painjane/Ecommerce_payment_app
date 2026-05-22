@@ -199,6 +199,34 @@ td button.danger { background: #fee2e2; color: #b91c1c; }
 .dash-action.cart { background: #17365f; color: var(--white); }
 .dash-action.home { background: var(--white); color: var(--blue); border: 1px solid #cfe0ff; }
 
+.account-page, .account-orders { display: grid; gap: 22px; }
+.account-page-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.account-page-heading h1 { margin: 0; font-size: clamp(2rem, 3vw, 2.6rem); letter-spacing: 0; }
+.account-page-heading p, .account-page-heading a:first-child { margin: 7px 0 0; color: var(--muted); }
+.account-page-heading a:first-child { display: inline-block; color: var(--blue); font-weight: 800; }
+.account-profile-image { width: 86px; height: 86px; border: 1px solid var(--line); border-radius: 50%; object-fit: cover; background: var(--white); }
+.account-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.account-card { min-height: 128px; display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 18px; width: 100%; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); text-align: left; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.account-card:hover, .account-card:focus-visible { border-color: #9db9e3; box-shadow: 0 12px 28px rgba(15, 23, 42, .12); transform: translateY(-2px); }
+.account-card span:not(.account-card-mark) { min-width: 0; display: grid; gap: 6px; }
+.account-card strong { font-size: 1.08rem; }
+.account-card small { color: var(--muted); line-height: 1.4; }
+.account-card-mark { width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; background: var(--soft-blue); color: var(--navy); border: 1px solid #cfe0ff; font-size: .82rem; font-weight: 950; }
+.account-logout-card .account-card-mark { background: #fff1f2; color: #b91c1c; border-color: #fecdd3; }
+.account-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.account-detail-panel, .account-placeholder { min-height: 190px; padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); box-shadow: 0 10px 24px rgba(15, 23, 42, .06); }
+.account-detail-panel h2, .account-placeholder h2 { margin-top: 0; }
+.account-detail-panel p { color: var(--muted); line-height: 1.5; }
+.account-detail-panel dl { display: grid; gap: 12px; margin: 0; }
+.account-detail-panel dl div { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.account-detail-panel dt { color: var(--muted); font-weight: 800; }
+.account-detail-panel dd { margin: 0; overflow-wrap: anywhere; font-weight: 800; }
+.account-order-list { display: grid; gap: 14px; }
+.account-order { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); box-shadow: 0 10px 24px rgba(15, 23, 42, .06); }
+.account-order div { display: grid; gap: 6px; }
+.account-order span { color: var(--muted); font-weight: 800; }
+.account-order strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+
 .support-float { position: fixed; right: 20px; bottom: 22px; z-index: 30; padding: 14px 18px; border-radius: 999px; background: var(--blue); color: var(--white); box-shadow: 0 12px 28px rgba(24, 119, 242, .32); font-weight: 900; }
 .footer { margin-top: 36px; background: var(--navy); color: var(--white); }
 .back-top { display: block; width: 100%; padding: 13px; text-align: center; background: #17365f; color: var(--white); font-weight: 800; }
@@ -222,7 +250,7 @@ td button.danger { background: #fee2e2; color: #b91c1c; }
   .nav-main { grid-template-columns: 1fr; gap: 12px; }
   .location { display: none; }
   .nav-actions { justify-content: space-between; }
-  .products-grid, .category-grid, .category-grid.wide, .dashboard-metrics, .dashboard-actions { grid-template-columns: repeat(2, 1fr); }
+  .products-grid, .category-grid, .category-grid.wide, .dashboard-metrics, .dashboard-actions, .account-card-grid { grid-template-columns: repeat(2, 1fr); }
   .product-detail, .cart-page, .checkout-page, .admin-layout { grid-template-columns: 1fr; }
   .summary-box, .admin-sidebar { position: static; }
   .footer-grid { grid-template-columns: repeat(2, 1fr); }
@@ -236,8 +264,12 @@ td button.danger { background: #fee2e2; color: #b91c1c; }
   .nav-strip { padding: 9px 12px; }
   .hero { min-height: 330px; padding: 34px 20px 90px; }
   .page-section, .home-page { width: min(100% - 20px, 1240px); }
-  .products-grid, .category-grid, .category-grid.wide, .metric-grid, .dashboard-metrics, .dashboard-actions { grid-template-columns: 1fr; }
+  .products-grid, .category-grid, .category-grid.wide, .metric-grid, .dashboard-metrics, .dashboard-actions, .account-card-grid, .account-detail-grid, .account-order { grid-template-columns: 1fr; }
   .dashboard-hero { align-items: flex-start; flex-direction: column; padding: 22px; }
+  .account-page-heading { align-items: flex-start; flex-direction: column; }
+  .account-card { grid-template-columns: 58px minmax(0, 1fr); min-height: 112px; padding: 15px; }
+  .account-card-mark { width: 58px; height: 58px; }
+  .account-detail-panel dl div { grid-template-columns: 1fr; gap: 5px; }
   .section-heading { align-items: start; flex-direction: column; }
   .cart-item { grid-template-columns: 1fr; }
   .cart-item img { width: 100%; height: 210px; }

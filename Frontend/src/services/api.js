@@ -238,6 +238,8 @@ export const api = {
   me: () => unwrap(apiClient.get("/auth/me")),
   getProducts: () => unwrap(apiClient.get("/products/")),
   getProduct: (id) => unwrap(apiClient.get(`/products/${id}`)),
+  getCategories: () => unwrap(apiClient.get("/categories/")),
+  createCategory: (payload) => unwrap(apiClient.post("/categories/", payload)),
   createProduct: (payload) => {
     const formData = payload instanceof FormData ? payload : new FormData();
 

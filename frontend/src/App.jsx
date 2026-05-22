@@ -11,9 +11,12 @@ import ProductDetails from "./pages/ProductDetails.jsx";
 import Cart from "./pages/Cart.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import Payment from "./pages/Payment.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
+import UserOrders from "./pages/UserOrders.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminAddProduct from "./pages/AdminAddProduct.jsx";
 import AdminProducts from "./pages/AdminProducts.jsx";
+import AdminCategories from "./pages/AdminCategories.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { auth } from "./services/api.js";
 
@@ -31,15 +34,11 @@ function AdminRoute({ children }) {
   return children;
 }
 
-function UserRoute({ children }) {
+function AuthRoute({ children }) {
   const user = auth.getUser();
 
   if (!auth.isAuthenticated() || !user) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (user.role === "admin") {
-    return <Navigate to="/admin" replace />;
   }
 
   return children;
@@ -62,12 +61,16 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/products/:id" element={<ProductDetails />} />
-            <Route path="/cart" element={<UserRoute><Cart /></UserRoute>} />
-            <Route path="/checkout" element={<UserRoute><Checkout /></UserRoute>} />
-            <Route path="/payment" element={<UserRoute><Payment /></UserRoute>} />
+            <Route path="/cart" element={<AuthRoute><Cart /></AuthRoute>} />
+            <Route path="/checkout" element={<AuthRoute><Checkout /></AuthRoute>} />
+            <Route path="/payment" element={<AuthRoute><Payment /></AuthRoute>} />
+            <Route path="/profile" element={<AuthRoute><UserProfile /></AuthRoute>} />
+            <Route path="/account" element={<AuthRoute><UserProfile /></AuthRoute>} />
+            <Route path="/orders" element={<AuthRoute><UserOrders /></AuthRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
             <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+            <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>

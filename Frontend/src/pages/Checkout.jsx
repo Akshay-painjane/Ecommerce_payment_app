@@ -38,8 +38,6 @@ function Checkout() {
       return itemsWithProducts;
     };
 
-    setLoading(true);
-
     loadCheckoutItems()
       .then((data) => {
         const safeItems = Array.isArray(data) ? data.filter(Boolean) : [];
