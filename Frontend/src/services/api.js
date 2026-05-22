@@ -117,10 +117,30 @@ apiClient.interceptors.response.use(
   }
 );
 
+const formatApiDetail = (detail) => {
+  if (!Array.isArray(detail)) {
+    return detail;
+  }
+
+  return detail.map((item) => {
+    const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : "";
+    return field ? `${field}: ${item.msg}` : item.msg;
+  }).join(", ");
+};
+
 const unwrap = (promise) => promise.then((response) => response.data).catch((error) => {
-  const detail = error.response?.data?.detail;
-  throw new Error(Array.isArray(detail) ? detail.map((item) => item.msg).join(", ") : detail || error.message || "Something went wrong");
+  if (error.response?.status === 401) {
+    throw new Error("Please login again");
+  }
+
+  const detail = formatApiDetail(error.response?.data?.detail);
+  throw new Error(detail || error.message || "Something went wrong");
 });
+
+const accessHeaders = () => {
+  const token = tokenStore.getAccess();
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+};
 
 const CART_STORAGE_KEY = "cart_items";
 
@@ -239,7 +259,9 @@ export const api = {
   getProducts: () => unwrap(apiClient.get("/products/")),
   getProduct: (id) => unwrap(apiClient.get(`/products/${id}`)),
   getCategories: () => unwrap(apiClient.get("/categories/")),
-  createCategory: (payload) => unwrap(apiClient.post("/categories/", payload)),
+  createCategory: (payload) => unwrap(apiClient.post("/categories/", payload, accessHeaders())),
+  updateCategory: (id, payload) => unwrap(apiClient.put(`/categories/${id}`, payload, accessHeaders())),
+  deleteCategory: (id) => unwrap(apiClient.delete(`/categories/${id}`, accessHeaders())),
   createProduct: (payload) => {
     const formData = payload instanceof FormData ? payload : new FormData();
 
