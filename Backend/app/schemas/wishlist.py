@@ -3,17 +3,18 @@ from pydantic import BaseModel
 from app.schemas.product import ProductOut
 
 
-class OrderItemOut(BaseModel):
-
-    id: int
-
-    order_id: int
+class WishlistCreate(BaseModel):
 
     product_id: int
 
-    quantity: int
 
-    price: float
+class WishlistOut(BaseModel):
+
+    id: int
+
+    user_id: int
+
+    product_id: int
 
     product: ProductOut
 

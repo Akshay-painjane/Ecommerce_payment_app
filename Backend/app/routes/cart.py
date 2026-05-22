@@ -27,11 +27,8 @@ router = APIRouter(
 
 
 # Add single product to cart
+# Add single product to cart
 
-@router.post(
-    "",
-    response_model=CartOut
-)
 @router.post(
     "/",
     response_model=CartOut
@@ -68,10 +65,6 @@ def bulk_cart_add(
 # Get user cart
 
 @router.get(
-    "",
-    response_model=list[CartOut]
-)
-@router.get(
     "/",
     response_model=list[CartOut]
 )
@@ -92,6 +85,7 @@ def delete_cart_item(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
+
     deleted = remove_from_cart(
         db,
         current_user.id,
@@ -99,6 +93,7 @@ def delete_cart_item(
     )
 
     if not deleted:
+
         return {
             "message": "Cart item not found"
         }

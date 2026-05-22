@@ -26,6 +26,17 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+# Update Profile Schema
+
+class UserUpdate(BaseModel):
+
+    name: str
+
+    phone: str | None = None
+
+    profile_image: str | None = None
+
+
 class UserOut(BaseModel):
 
     id: int

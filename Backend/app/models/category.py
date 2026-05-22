@@ -12,5 +12,13 @@ class Category(Base):
 
     name = Column(String, unique=True, nullable=False)
 
+    description = Column(String, nullable=True)
+
+    image_url = Column(String, nullable=True)
+
     # relationship with Product
-    products = relationship("Product", back_populates="category")
+
+    products = relationship(
+        "Product",
+        back_populates="category"
+    )

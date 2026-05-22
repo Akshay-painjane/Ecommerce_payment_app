@@ -9,8 +9,8 @@ load_dotenv()
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 
-print("EMAIL_USER =", EMAIL_USER)
-print("EMAIL_PASS =", EMAIL_PASS)
+#print("EMAIL_USER =", EMAIL_USER)
+#print("EMAIL_PASS =", EMAIL_PASS)
 
 
 def send_email(to_email: str, subject: str, body: str):
