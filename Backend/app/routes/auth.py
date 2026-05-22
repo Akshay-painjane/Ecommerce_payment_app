@@ -2,6 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from sqlalchemy.orm import Session
 
+from fastapi import UploadFile, File, Form
+
+import cloudinary.uploader
+
+from app.schemas.user import UserUpdate
+
+from app.crud.user import update_user_profile
+
 from app.database import get_db
 
 from app.schemas.user import RefreshTokenRequest, UserCreate, UserLogin, UserOut
@@ -117,8 +125,61 @@ def login(
 
 
 @router.get("/me")
-def me(current_user = Depends(get_current_user)):
+def me(
+    current_user = Depends(get_current_user)
+):
+
     return user_payload(current_user)
+
+
+@router.put(
+    "/me",
+    response_model=UserOut
+)
+def update_profile(
+
+    name: str = Form(...),
+
+    phone: str = Form(None),
+
+    file: UploadFile = File(None),
+
+    db: Session = Depends(get_db),
+
+    current_user = Depends(get_current_user)
+):
+
+    image_url = current_user.profile_image
+
+    # Upload new profile image
+
+    if file:
+
+        upload_result = cloudinary.uploader.upload(
+            file.file
+        )
+
+        image_url = upload_result["secure_url"]
+
+    user_data = UserUpdate(
+
+        name=name,
+
+        phone=phone,
+
+        profile_image=image_url
+    )
+
+    updated_user = update_user_profile(
+
+        db,
+
+        current_user.id,
+
+        user_data
+    )
+
+    return updated_user
 
 
 @router.post("/refresh")

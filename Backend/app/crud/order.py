@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Session
 
+from fastapi import HTTPException
+
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.product import Product
+from app.models.cart import Cart
 
 from app.schemas.order import (
     SingleOrderCreate,
@@ -26,11 +29,17 @@ def create_single_order(
 
     if not product:
 
-        raise Exception("Product not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
 
     if product.stock < order.quantity:
 
-        raise Exception("Out of stock")
+        raise HTTPException(
+            status_code=400,
+            detail="Out of stock"
+        )
 
     total_price = (
         product.price * order.quantity
@@ -65,6 +74,13 @@ def create_single_order(
 
     db.add(order_item)
 
+    # Remove ordered product from cart
+
+    db.query(Cart).filter(
+        Cart.user_id == user_id,
+        Cart.product_id == product.id
+    ).delete()
+
     db.commit()
 
     db.refresh(db_order)
@@ -94,14 +110,16 @@ def create_bulk_order(
 
         if not product:
 
-            raise Exception(
-                "Product not found"
+            raise HTTPException(
+                status_code=404,
+                detail="Product not found"
             )
 
         if product.stock < item.quantity:
 
-            raise Exception(
-                f"{product.name} out of stock"
+            raise HTTPException(
+                status_code=400,
+                detail=f"{product.name} out of stock"
             )
 
         total_price += (
@@ -144,6 +162,12 @@ def create_bulk_order(
         )
 
         db.add(order_item)
+
+    # Clear cart after successful order
+
+    db.query(Cart).filter(
+        Cart.user_id == user_id
+    ).delete()
 
     db.commit()
 
