@@ -25,6 +25,7 @@ function AdminDashboard() {
         <div className="admin-actions">
           <Link className="primary-link" to="/admin/add-product">Add Product</Link>
           <Link className="secondary-link" to="/admin/products">Manage Products</Link>
+          <Link className="secondary-link" to="/admin/categories">Manage Categories</Link>
         </div>
       </div>
     </section>

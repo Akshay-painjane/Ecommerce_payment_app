@@ -7,7 +7,7 @@ const initialForm = {
   description: "",
   price: "",
   category_id: 1,
-  image_url: "",
+  file: null,
   stock: "",
   rating: "4.5",
 };
@@ -17,7 +17,10 @@ function AdminAddProduct() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const change = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+  const change = (event) => {
+    const { name, value, files } = event.target;
+    setForm({ ...form, [name]: files ? files[0] : value });
+  };
 
   const submit = async (event) => {
     event.preventDefault();
@@ -25,11 +28,13 @@ function AdminAddProduct() {
     setMessage("");
     try {
       await api.createProduct({
-        ...form,
+        name: form.name,
+        description: form.description,
         price: Number(form.price),
         stock: Number(form.stock),
         category_id: Number(form.category_id),
         rating: Number(form.rating),
+        file: form.file,
       });
       setMessage("Product added successfully. It is now visible on the storefront.");
       setForm(initialForm);
@@ -49,7 +54,7 @@ function AdminAddProduct() {
         <label>Description<textarea name="description" value={form.description} onChange={change} required /></label>
         <label>Price<input name="price" value={form.price} onChange={change} type="number" min="1" required /></label>
         <label>Category<select name="category_id" value={form.category_id} onChange={change}>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-        <label>Image URL<input name="image_url" value={form.image_url} onChange={change} required /></label>
+        <label>Product image<input name="file" onChange={change} type="file" accept="image/*" required /></label>
         <label>Stock<input name="stock" value={form.stock} onChange={change} type="number" min="0" required /></label>
         <label>Rating<input name="rating" value={form.rating} onChange={change} type="number" min="1" max="5" step="0.1" required /></label>
         <button type="submit">Add Product</button>

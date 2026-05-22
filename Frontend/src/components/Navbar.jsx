@@ -8,11 +8,6 @@ function Navbar() {
   const isAdmin = user?.role === "admin";
   const isUser = Boolean(user) && user?.role !== "admin";
 
-  const logout = () => {
-    auth.logout();
-    navigate("/login");
-  };
-
   const onSearch = (event) => {
     event.preventDefault();
     const value = new FormData(event.currentTarget).get("q");
@@ -50,10 +45,10 @@ function Navbar() {
           )}
 
           {user && (
-            <button className="nav-link-button" onClick={logout} type="button">
+            <Link to="/account">
               <span>Hello, {user.name || user.email || "there"}</span>
-              <strong>Logout</strong>
-            </button>
+              <strong>Account</strong>
+            </Link>
           )}
 
           {isUser && (
