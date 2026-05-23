@@ -1,17 +1,59 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { auth } from "../services/api.js";
+import { useEffect, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { auth, categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = auth.getUser();
+  const [navCategories, setNavCategories] = useState(fallbackCategories);
 
   const isAdmin = user?.role === "admin";
-  const isUser = Boolean(user) && user?.role !== "admin";
+  const isUser = Boolean(user) && !isAdmin;
+  const selectedCategory = new URLSearchParams(location.search).get("category") || "";
+
+  useEffect(() => {
+    let active = true;
+
+    getCategoriesWithFallback()
+      .then((items) => {
+        if (active) {
+          setNavCategories(items);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setNavCategories(fallbackCategories);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const onSearch = (event) => {
     event.preventDefault();
-    const value = new FormData(event.currentTarget).get("q");
-    navigate(`/products?q=${encodeURIComponent(value || "")}`);
+    const form = new FormData(event.currentTarget);
+    const value = form.get("q") || "";
+    const category = form.get("category") || "";
+    const params = new URLSearchParams();
+
+    if (category) {
+      params.set("category", category);
+    }
+
+    if (value) {
+      params.set("q", value);
+    }
+
+    navigate(`/products${params.toString() ? `?${params.toString()}` : ""}`);
+  };
+
+  const onCategoryChange = (event) => {
+    const category = event.target.value;
+
+    navigate(category ? `/products?category=${encodeURIComponent(category)}` : "/products");
   };
 
   return (
@@ -25,11 +67,11 @@ function Navbar() {
         </div>
 
         <form className="searchbar" onSubmit={onSearch}>
-          <select name="category">
-            <option>All</option>
-            <option>Mobiles</option>
-            <option>Fashion</option>
-            <option>Home</option>
+          <select name="category" value={selectedCategory} onChange={onCategoryChange}>
+            <option value="">All</option>
+            {navCategories.map((category) => (
+              <option key={category.id} value={category.name}>{category.name}</option>
+            ))}
           </select>
 
           <input name="q" placeholder="Search Style Store" />
@@ -84,15 +126,14 @@ function Navbar() {
           </>
         )}
 
-        {isUser && (
+        {!isAdmin && (
           <>
             <NavLink to="/categories">Categories</NavLink>
-            <NavLink to="/products?category=Mobiles">Mobiles</NavLink>
-            <NavLink to="/products?category=Electronics">Electronics</NavLink>
-            <NavLink to="/products?category=Fashion">Fashion</NavLink>
-            <NavLink to="/products?category=Home">Home</NavLink>
-            <NavLink to="/products?category=Beauty">Beauty</NavLink>
-            <NavLink to="/products?category=Grocery">Grocery</NavLink>
+            {navCategories.map((category) => (
+              <NavLink key={category.id} to={`/products?category=${encodeURIComponent(category.name)}`}>
+                {category.name}
+              </NavLink>
+            ))}
           </>
         )}
 
