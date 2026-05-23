@@ -2,17 +2,47 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryCard from "../components/CategoryCard.jsx";
 import ProductCard from "../components/ProductCard.jsx";
-import { api, categories } from "../services/api.js";
+import { api, categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
 
 function Home() {
   const [products, setProducts] = useState([]);
+  const [homeCategories, setHomeCategories] = useState(fallbackCategories);
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState("");
 
   useEffect(() => {
     api.getProducts()
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    getCategoriesWithFallback()
+      .then((items) => {
+        if (active) {
+          setHomeCategories(items);
+          setCategoriesError("");
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setHomeCategories(fallbackCategories);
+          setCategoriesError(err.message || "Showing default categories.");
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setCategoriesLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -26,8 +56,9 @@ function Home() {
         </div>
       </div>
 
-      <div className="category-grid overlap">
-        {categories.slice(0, 4).map((category) => <CategoryCard key={category.id} category={category} />)}
+      {categoriesError && <p className="loading">{categoriesError}</p>}
+      <div className="category-grid overlap" aria-busy={categoriesLoading}>
+        {homeCategories.slice(0, 6).map((category) => <CategoryCard key={category.id} category={category} />)}
       </div>
 
       <div className="section-heading">

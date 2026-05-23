@@ -1,14 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
-import { api, categories } from "../services/api.js";
+import { api, categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
 
 const pageSize = 8;
+
+const normalizeText = (value) => String(value || "").trim().toLowerCase();
+
+const getProductCategoryName = (product) => {
+  if (product.category && typeof product.category === "object") {
+    return product.category.name || product.category.title || "";
+  }
+
+  return product.category || product.category_name || "";
+};
+
+const getProductCategoryId = (product) => {
+  if (product.category && typeof product.category === "object") {
+    return product.category.id ?? product.category.category_id;
+  }
+
+  return product.category_id ?? product.category;
+};
 
 function Products() {
   const [searchParams] = useSearchParams();
   const { categoryName: routeCategoryName } = useParams();
   const [products, setProducts] = useState([]);
+  const [categoryList, setCategoryList] = useState(fallbackCategories);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -22,14 +41,41 @@ function Products() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    getCategoriesWithFallback()
+      .then((items) => {
+        if (active) {
+          setCategoryList(items);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setCategoryList(fallbackCategories);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
-    const query = (searchParams.get("q") || search).toLowerCase();
+    const query = normalizeText(searchParams.get("q") || search);
     const categoryName = searchParams.get("category") || routeCategoryName;
-    const category = categories.find((item) => item.name === categoryName);
+    const normalizedCategoryName = normalizeText(categoryName);
+    const category = categoryList.find((item) => normalizeText(item.name) === normalizedCategoryName);
 
     const result = products.filter((product) => {
-      const matchesQuery = !query || product.name.toLowerCase().includes(query) || product.description?.toLowerCase().includes(query);
-      const matchesCategory = !category || product.category_id === category.id;
+      const productName = normalizeText(product.name || product.title);
+      const productDescription = normalizeText(product.description);
+      const productCategoryName = normalizeText(getProductCategoryName(product));
+      const productCategoryId = getProductCategoryId(product);
+      const matchesQuery = !query || productName.includes(query) || productDescription.includes(query);
+      const matchesCategory = !categoryName
+        || String(productCategoryId) === String(category?.id)
+        || productCategoryName === normalizedCategoryName;
       return matchesQuery && matchesCategory;
     });
 
@@ -39,7 +85,7 @@ function Products() {
       if (sort === "rating") return Number(b.rating || 0) - Number(a.rating || 0);
       return Number(b.id) - Number(a.id);
     });
-  }, [products, searchParams, routeCategoryName, search, sort]);
+  }, [products, categoryList, searchParams, routeCategoryName, search, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -76,8 +122,8 @@ function Products() {
           <option value="rating">Customer Rating</option>
         </select>
         <div className="category-pills">
-          {categories.map((category) => (
-            <a key={category.id} href={`/products?category=${category.name}`}>{category.name}</a>
+          {categoryList.map((category) => (
+            <Link key={category.id} to={`/products?category=${encodeURIComponent(category.name)}`}>{category.name}</Link>
           ))}
         </div>
       </div>

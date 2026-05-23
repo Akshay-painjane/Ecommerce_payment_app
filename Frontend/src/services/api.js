@@ -312,3 +312,60 @@ export const categories = [
   { id: 5, name: "Beauty", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80" },
   { id: 6, name: "Grocery", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
 ];
+
+const getCategoryImageValue = (category) => (
+  category?.image_url
+  || category?.image
+  || category?.file
+  || category?.image_path
+  || category?.category_image
+  || ""
+);
+
+export const getCategoryImageUrl = (category) => {
+  const image = getCategoryImageValue(category);
+
+  if (typeof image !== "string" || !image.trim()) {
+    return "";
+  }
+
+  const imageUrl = image.trim();
+
+  if (/^(?:https?:|data:|blob:)/i.test(imageUrl)) {
+    return imageUrl;
+  }
+
+  return `${API_BASE_URL}/${imageUrl.replace(/^\/+/, "")}`;
+};
+
+export const normalizeCategory = (category, index = 0) => {
+  if (!category || typeof category !== "object") {
+    return null;
+  }
+
+  const fallback = categories.find((item) => item.name.toLowerCase() === String(category.name || "").toLowerCase())
+    || categories[index % categories.length];
+  const name = String(category.name || fallback?.name || "").trim();
+
+  if (!name) {
+    return null;
+  }
+
+  return {
+    ...category,
+    id: category.id ?? fallback?.id ?? name,
+    name,
+    image: getCategoryImageUrl(category) || fallback?.image || "",
+  };
+};
+
+export const normalizeCategories = (items) => (
+  Array.isArray(items)
+    ? items.map((category, index) => normalizeCategory(category, index)).filter(Boolean)
+    : []
+);
+
+export const getCategoriesWithFallback = async () => {
+  const backendCategories = normalizeCategories(await api.getCategories());
+  return backendCategories.length ? backendCategories : categories;
+};
