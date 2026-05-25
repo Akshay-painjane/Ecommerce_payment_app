@@ -40,7 +40,7 @@ router = APIRouter(
 # Create category
 
 @router.post(
-    "/",
+    "/create",
     response_model=CategoryOut
 )
 def create_new_category(
@@ -80,7 +80,7 @@ def create_new_category(
 # Get all categories
 
 @router.get(
-    "/",
+    "/get-all",
     response_model=list[CategoryOut]
 )
 def get_all_categories(
@@ -93,7 +93,7 @@ def get_all_categories(
 # Get single category
 
 @router.get(
-    "/{category_id}",
+    "/get/{category_id}",
     response_model=CategoryOut
 )
 def get_single_category(
@@ -119,7 +119,7 @@ def get_single_category(
 # Update category
 
 @router.put(
-    "/{category_id}",
+    "/update/{category_id}",
     response_model=CategoryOut
 )
 def update_single_category(
@@ -181,7 +181,7 @@ def update_single_category(
 
 # Delete category
 
-@router.delete("/{category_id}")
+@router.delete("/delete/{category_id}")
 def delete_single_category(
     category_id: int,
     db: Session = Depends(get_db),
