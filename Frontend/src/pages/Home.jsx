@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryCard from "../components/CategoryCard.jsx";
 import ProductCard from "../components/ProductCard.jsx";
-import { api, categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
+import { api, getCategoriesWithFallback } from "../services/api.js";
 
 function Home() {
   const [products, setProducts] = useState([]);
-  const [homeCategories, setHomeCategories] = useState(fallbackCategories);
+  const [homeCategories, setHomeCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState("");
@@ -30,8 +30,8 @@ function Home() {
       })
       .catch((err) => {
         if (active) {
-          setHomeCategories(fallbackCategories);
-          setCategoriesError(err.message || "Showing default categories.");
+          setHomeCategories([]);
+          setCategoriesError(err.message || "Unable to load categories.");
         }
       })
       .finally(() => {
@@ -58,6 +58,8 @@ function Home() {
 
       {categoriesError && <p className="loading">{categoriesError}</p>}
       <div className="category-grid overlap" aria-busy={categoriesLoading}>
+        {categoriesLoading && homeCategories.length === 0 && <p className="loading">Loading categories...</p>}
+        {!categoriesLoading && homeCategories.length === 0 && !categoriesError && <p className="loading">No categories found.</p>}
         {homeCategories.slice(0, 6).map((category) => <CategoryCard key={category.id} category={category} />)}
       </div>
 

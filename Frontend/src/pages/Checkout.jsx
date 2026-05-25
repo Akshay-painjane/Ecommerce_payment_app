@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "../services/api.js";
+import { api, tokenStore } from "../services/api.js";
 
 function Checkout() {
   const navigate = useNavigate();
@@ -8,11 +8,22 @@ function Checkout() {
   const [items, setItems] = useState([]);
   const [address, setAddress] = useState("221B Blue Avenue, Bengaluru, Karnataka 560001");
   const [loading, setLoading] = useState(true);
+  const [placing, setPlacing] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    let active = true;
     const productId = searchParams.get("product");
 
     const loadCheckoutItems = async () => {
+      setError("");
+      const token = tokenStore.getAccess();
+
+      if (!token) {
+        navigate("/login", { state: { message: "Please login to checkout" }, replace: true });
+        return [];
+      }
+
       if (productId) {
         const product = await api.getProduct(productId);
         return [{ product, quantity: 1 }];
@@ -38,17 +49,41 @@ function Checkout() {
       return itemsWithProducts;
     };
 
-    loadCheckoutItems()
+    const fetchCheckoutItems = () => {
+      setLoading(true);
+
+      return loadCheckoutItems()
       .then((data) => {
+        if (!active) {
+          return;
+        }
         const safeItems = Array.isArray(data) ? data.filter(Boolean) : [];
         setItems(safeItems);
       })
       .catch((error) => {
-        console.error("Checkout load error:", error);
+        if (!active) {
+          return;
+        }
+        setError(error.message || "Unable to load checkout items.");
         setItems([]);
       })
-      .finally(() => setLoading(false));
-  }, [searchParams]);
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    };
+
+    fetchCheckoutItems();
+    window.addEventListener("pageshow", fetchCheckoutItems);
+    window.addEventListener("focus", fetchCheckoutItems);
+
+    return () => {
+      active = false;
+      window.removeEventListener("pageshow", fetchCheckoutItems);
+      window.removeEventListener("focus", fetchCheckoutItems);
+    };
+  }, [navigate, searchParams]);
 
   const total = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -60,6 +95,9 @@ function Checkout() {
   }, [items]);
 
   const placeOrder = async () => {
+    setPlacing(true);
+    setError("");
+
     const payload = {
       items: items
         .map((item) => {
@@ -73,14 +111,29 @@ function Checkout() {
         .filter((item) => item.product_id),
     };
 
-    const order = await api.createOrder(payload);
-    navigate("/payment", { state: { order, amount: total } });
+    try {
+      const order = await api.createOrder(payload);
+      navigate("/payment", { state: { order, amount: total } });
+    } catch (err) {
+      setError(err.message || "Unable to place order.");
+    } finally {
+      setPlacing(false);
+    }
   };
 
   return (
     <section className="checkout-page page-section">
       <div className="checkout-main">
-        <h1>Checkout</h1>
+        <div className="cart-header-panel">
+          <div>
+            <span>Secure Checkout</span>
+            <h1>Review your order</h1>
+            <p>Orders are created against the currently signed-in account.</p>
+          </div>
+          <strong>{items.length} items</strong>
+        </div>
+
+        {error && <p className="alert">{error}</p>}
 
         <section className="checkout-panel">
           <h2>Delivery address</h2>
@@ -93,7 +146,10 @@ function Checkout() {
           {loading ? (
             <p>Loading...</p>
           ) : items.length === 0 ? (
-            <p>No items found.</p>
+            <div className="empty-state compact">
+              <h2>No checkout items</h2>
+              <p>Add products to your cart or use Buy Now from a product page.</p>
+            </div>
           ) : (
             items.map((item, index) => {
               const product = item.product || item;
@@ -117,8 +173,8 @@ function Checkout() {
         <p>Delivery: Free</p>
         <strong>Total: Rs. {total.toLocaleString("en-IN")}</strong>
 
-        <button disabled={!items.length || loading} onClick={placeOrder} type="button">
-          Continue to Payment
+        <button disabled={!items.length || loading || placing} onClick={placeOrder} type="button">
+          {placing ? "Creating order..." : "Continue to Payment"}
         </button>
       </aside>
     </section>

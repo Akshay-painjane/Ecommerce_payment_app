@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
-import { api, categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
+import { api, getCategoriesWithFallback } from "../services/api.js";
 
 const pageSize = 8;
 
@@ -27,12 +27,13 @@ function Products() {
   const [searchParams] = useSearchParams();
   const { categoryName: routeCategoryName } = useParams();
   const [products, setProducts] = useState([]);
-  const [categoryList, setCategoryList] = useState(fallbackCategories);
+  const [categoryList, setCategoryList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("featured");
   const [page, setPage] = useState(1);
+  const activeCategoryName = searchParams.get("category") || (routeCategoryName ? decodeURIComponent(routeCategoryName) : "");
 
   useEffect(() => {
     api.getProducts()
@@ -52,7 +53,7 @@ function Products() {
       })
       .catch(() => {
         if (active) {
-          setCategoryList(fallbackCategories);
+          setCategoryList([]);
         }
       });
 
@@ -63,7 +64,7 @@ function Products() {
 
   const filtered = useMemo(() => {
     const query = normalizeText(searchParams.get("q") || search);
-    const categoryName = searchParams.get("category") || routeCategoryName;
+    const categoryName = activeCategoryName;
     const normalizedCategoryName = normalizeText(categoryName);
     const category = categoryList.find((item) => normalizeText(item.name) === normalizedCategoryName);
 
@@ -85,7 +86,7 @@ function Products() {
       if (sort === "rating") return Number(b.rating || 0) - Number(a.rating || 0);
       return Number(b.id) - Number(a.id);
     });
-  }, [products, categoryList, searchParams, routeCategoryName, search, sort]);
+  }, [products, categoryList, searchParams, activeCategoryName, search, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -95,7 +96,7 @@ function Products() {
     <section className="page-section">
       <div className="section-heading">
         <div>
-          <h1>{searchParams.get("category") || routeCategoryName || "All products"}</h1>
+          <h1>{activeCategoryName || "All products"}</h1>
           <p>{filtered.length} products available</p>
         </div>
       </div>
@@ -123,7 +124,7 @@ function Products() {
         </select>
         <div className="category-pills">
           {categoryList.map((category) => (
-            <Link key={category.id} to={`/products?category=${encodeURIComponent(category.name)}`}>{category.name}</Link>
+            <Link key={category.id} to={`/category/${encodeURIComponent(category.name)}`}>{category.name}</Link>
           ))}
         </div>
       </div>
@@ -131,7 +132,15 @@ function Products() {
       {error && <p className="alert">{error}</p>}
       {loading ? <p className="loading">Loading products...</p> : (
         <>
-          <div className="products-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+          {visibleProducts.length === 0 ? (
+            <div className="empty-state catalog-empty-state">
+              <h2>No products found</h2>
+              <p>{activeCategoryName ? `There are no products in ${activeCategoryName} yet.` : "Try a different search or category."}</p>
+              <Link className="primary-link" to="/products">View all products</Link>
+            </div>
+          ) : (
+            <div className="products-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+          )}
           <div className="pagination">
             <button disabled={currentPage === 1} onClick={() => setPage((value) => value - 1)} type="button">Previous</button>
             <span>Page {currentPage} of {pageCount}</span>

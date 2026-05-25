@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import CategoryCard from "../components/CategoryCard.jsx";
-import { categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
+import { getCategoriesWithFallback } from "../services/api.js";
 
 function Categories() {
-  const [categoryList, setCategoryList] = useState(fallbackCategories);
+  const [categoryList, setCategoryList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,8 +19,8 @@ function Categories() {
       })
       .catch((err) => {
         if (active) {
-          setCategoryList(fallbackCategories);
-          setError(err.message || "Showing default categories.");
+          setCategoryList([]);
+          setError(err.message || "Unable to load categories.");
         }
       })
       .finally(() => {
@@ -42,6 +42,7 @@ function Categories() {
       </div>
       {error && <p className="loading">{error}</p>}
       {loading && categoryList.length === 0 && <p className="loading">Loading categories...</p>}
+      {!loading && categoryList.length === 0 && !error && <p className="loading">No categories found.</p>}
       <div className="category-grid wide" aria-busy={loading}>
         {categoryList.map((category) => <CategoryCard key={category.id} category={category} />)}
       </div>

@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar.jsx";
-import { api } from "../services/api.js";
+import { api, getCategoryImageUrl, normalizeCategories } from "../services/api.js";
 
 const initialForm = {
   name: "",
   description: "",
   file: null,
 };
-
-const API_ORIGIN = "http://127.0.0.1:8000";
 
 const getCategoryPayload = (form, includeFile) => {
   const categoryName = form.name.trim();
@@ -22,31 +20,6 @@ const getCategoryPayload = (form, includeFile) => {
   }
 
   return payload;
-};
-
-const getCategoryImageValue = (category) => (
-  category.image_url
-  || category.image
-  || category.file
-  || category.image_path
-  || category.category_image
-  || ""
-);
-
-const getCategoryImageUrl = (category) => {
-  const image = getCategoryImageValue(category);
-
-  if (typeof image !== "string" || !image.trim()) {
-    return "";
-  }
-
-  const imageUrl = image.trim();
-
-  if (/^(?:https?:|data:|blob:)/i.test(imageUrl)) {
-    return imageUrl;
-  }
-
-  return `${API_ORIGIN}/${imageUrl.replace(/^\/+/, "")}`;
 };
 
 function CategoryPreview({ category }) {
@@ -63,6 +36,8 @@ function CategoryPreview({ category }) {
 function AdminCategories() {
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(initialForm);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [formResetKey, setFormResetKey] = useState(0);
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,7 +51,7 @@ function AdminCategories() {
     api.getCategories()
       .then((data) => {
         if (active) {
-          setCategories(Array.isArray(data) ? data : []);
+          setCategories(normalizeCategories(data));
         }
       })
       .catch((err) => {
@@ -95,18 +70,33 @@ function AdminCategories() {
     };
   }, []);
 
+  useEffect(() => () => {
+    if (previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  }, [previewUrl]);
+
   const refreshCategories = async () => {
     const data = await api.getCategories();
-    setCategories(Array.isArray(data) ? data : []);
+    setCategories(normalizeCategories(data));
   };
 
   const change = (event) => {
     const { name, files, value } = event.target;
 
+    const file = files ? files[0] || null : null;
+
     setForm((currentForm) => ({
       ...currentForm,
-      [name]: files ? files[0] || null : value,
+      [name]: files ? file : value,
     }));
+
+    if (files) {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(file ? URL.createObjectURL(file) : "");
+    }
   };
 
   const submit = async (event) => {
@@ -143,7 +133,8 @@ function AdminCategories() {
       await refreshCategories();
       setEditing(null);
       setForm(initialForm);
-      event.currentTarget.reset();
+      setPreviewUrl("");
+      setFormResetKey((key) => key + 1);
     } catch (err) {
       setError(err.message || `Unable to ${editing ? "update" : "add"} category.`);
     } finally {
@@ -160,11 +151,14 @@ function AdminCategories() {
       description: category.description || `${category.name || ""} category`,
       file: null,
     });
+    setPreviewUrl(getCategoryImageUrl(category));
   };
 
   const cancelEdit = () => {
     setEditing(null);
     setForm(initialForm);
+    setPreviewUrl("");
+    setFormResetKey((key) => key + 1);
     setError("");
   };
 
@@ -197,19 +191,36 @@ function AdminCategories() {
   return (
     <section className="admin-layout page-section">
       <AdminSidebar />
-      <div className="admin-content">
-        <h1>Manage categories</h1>
-        {message && <p className="success">{message}</p>}
+      <div className="admin-content admin-category-page">
+        <div className="admin-page-header">
+          <div>
+            <span>Catalog setup</span>
+            <h1>Manage categories</h1>
+            <p>Add departments, upload category images, and keep storefront category cards in sync with the backend.</p>
+          </div>
+          <strong>{categories.length} categories</strong>
+        </div>
+        {message && <p className="success toast-message">{message}</p>}
         {error && <p className="alert">{error}</p>}
 
-        <form className="admin-form" onSubmit={submit}>
-          <h2>{editing ? "Edit category" : "Add category"}</h2>
-          <label>Category name<input name="name" value={form.name} onChange={change} required /></label>
-          <label>Description<textarea name="description" value={form.description} onChange={change} /></label>
-          <label>Category image<input key={editing?.id || "new-category"} name="file" onChange={change} type="file" accept="image/*" /></label>
-          <div>
+        <form className="admin-form category-editor" onSubmit={submit}>
+          <div className="category-editor-copy">
+            <h2>{editing ? "Edit category" : "Add category"}</h2>
+            <p>Images are uploaded to the backend and reused automatically on the home and category pages.</p>
+          </div>
+          <div className="category-form-grid">
+            <div className="category-fields">
+              <label>Category name<input name="name" value={form.name} onChange={change} required /></label>
+              <label>Description<textarea name="description" value={form.description} onChange={change} /></label>
+              <label>Category image<input key={`${editing?.id || "new-category"}-${formResetKey}`} name="file" onChange={change} type="file" accept="image/*" /></label>
+            </div>
+            <div className="category-upload-preview">
+              {previewUrl ? <img src={previewUrl} alt={form.name || "Category preview"} /> : <span>Image preview</span>}
+            </div>
+          </div>
+          <div className="form-actions">
             <button disabled={saving} type="submit">{saving ? "Saving..." : editing ? "Save Category" : "Add Category"}</button>
-            {editing && <button onClick={cancelEdit} type="button">Cancel</button>}
+            {editing && <button className="secondary-button" onClick={cancelEdit} type="button">Cancel</button>}
           </div>
         </form>
 

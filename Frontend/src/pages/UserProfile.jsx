@@ -94,12 +94,20 @@ function UserProfile() {
 
   return (
     <section className="account-page page-section">
-      <div className="account-page-heading">
+      <div className="account-page-heading account-hero-panel">
         <div>
+          <span className="account-kicker">Your Style Store</span>
           <h1>Your Account</h1>
-          <p>Manage orders, account details, and shopping shortcuts.</p>
+          <p>Hi {user?.name || user?.email || "there"}, manage orders, account details, and shopping shortcuts from one place.</p>
         </div>
-        {user?.profile_image && <img className="account-profile-image" src={user.profile_image} alt={user.name || "Profile"} />}
+        <div className="account-identity">
+          {user?.profile_image ? (
+            <img className="account-profile-image" src={user.profile_image} alt={user.name || "Profile"} />
+          ) : (
+            <span className="account-avatar">{String(user?.name || user?.email || "U").slice(0, 1).toUpperCase()}</span>
+          )}
+          <strong>{getStatus(user)}</strong>
+        </div>
       </div>
 
       {error && <p className="alert">{error}</p>}
