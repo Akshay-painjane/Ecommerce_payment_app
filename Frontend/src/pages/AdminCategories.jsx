@@ -196,7 +196,7 @@ function AdminCategories() {
           <div>
             <span>Catalog setup</span>
             <h1>Manage categories</h1>
-            <p>Add departments, upload category images, and keep storefront category cards in sync with the backend.</p>
+            <p>Add departments, upload category images, and keep storefront category cards fresh.</p>
           </div>
           <strong>{categories.length} categories</strong>
         </div>
