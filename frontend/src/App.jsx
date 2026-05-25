@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import Login from "./pages/Login.jsx";
@@ -36,9 +36,16 @@ function AdminRoute({ children }) {
 
 function AuthRoute({ children }) {
   const user = auth.getUser();
+  const location = useLocation();
 
   if (!auth.isAuthenticated() || !user) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ message: location.pathname === "/checkout" ? "Please login to checkout" : "Please login again" }}
+      />
+    );
   }
 
   return children;
@@ -70,8 +77,12 @@ function App() {
             <Route path="/orders" element={<AuthRoute><UserOrders /></AuthRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
+            <Route path="/admin/product/add" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
             <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+            <Route path="/admin/manage-products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
             <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+            <Route path="/admin/manage-categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+            <Route path="/manage-categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>

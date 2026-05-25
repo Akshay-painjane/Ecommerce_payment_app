@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { auth, categories as fallbackCategories, getCategoriesWithFallback } from "../services/api.js";
+import { auth, getCategoriesWithFallback } from "../services/api.js";
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = auth.getUser();
-  const [navCategories, setNavCategories] = useState(fallbackCategories);
+  const [navCategories, setNavCategories] = useState([]);
 
   const isAdmin = user?.role === "admin";
-  const isUser = Boolean(user) && !isAdmin;
-  const selectedCategory = new URLSearchParams(location.search).get("category") || "";
+  const routeCategory = location.pathname.startsWith("/category/")
+    ? decodeURIComponent(location.pathname.replace("/category/", ""))
+    : "";
+  const selectedCategory = new URLSearchParams(location.search).get("category") || routeCategory;
 
   useEffect(() => {
     let active = true;
@@ -23,7 +25,7 @@ function Navbar() {
       })
       .catch(() => {
         if (active) {
-          setNavCategories(fallbackCategories);
+          setNavCategories([]);
         }
       });
 
@@ -47,13 +49,14 @@ function Navbar() {
       params.set("q", value);
     }
 
-    navigate(`/products${params.toString() ? `?${params.toString()}` : ""}`);
+    const query = value ? `?q=${encodeURIComponent(value)}` : "";
+    navigate(category ? `/category/${encodeURIComponent(category)}${query}` : `/products${params.toString() ? `?${params.toString()}` : ""}`);
   };
 
   const onCategoryChange = (event) => {
     const category = event.target.value;
 
-    navigate(category ? `/products?category=${encodeURIComponent(category)}` : "/products");
+    navigate(category ? `/category/${encodeURIComponent(category)}` : "/products");
   };
 
   return (
@@ -93,7 +96,7 @@ function Navbar() {
             </Link>
           )}
 
-          {isUser && (
+          {user && (
             <Link className="cart-link" to="/cart">
               <span>Cart</span>
               <strong>Basket</strong>
@@ -130,7 +133,7 @@ function Navbar() {
           <>
             <NavLink to="/categories">Categories</NavLink>
             {navCategories.map((category) => (
-              <NavLink key={category.id} to={`/products?category=${encodeURIComponent(category.name)}`}>
+              <NavLink key={category.id} to={`/category/${encodeURIComponent(category.name)}`}>
                 {category.name}
               </NavLink>
             ))}

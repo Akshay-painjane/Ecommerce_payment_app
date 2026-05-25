@@ -1,22 +1,30 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+
+const redirectToLogin = () => {
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+};
 
 export const tokenStore = {
-  getAccess: () => localStorage.getItem("access_token") || localStorage.getItem("token"),
-  getRefresh: () => localStorage.getItem("refresh_token"),
+  getAccess: () => localStorage.getItem(ACCESS_TOKEN_KEY),
+  getRefresh: () => localStorage.getItem(REFRESH_TOKEN_KEY),
   setTokens: ({ access_token, refresh_token }) => {
     if (access_token) {
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("token", access_token);
+      localStorage.setItem(ACCESS_TOKEN_KEY, access_token);
+      localStorage.removeItem("token");
     }
     if (refresh_token) {
-      localStorage.setItem("refresh_token", refresh_token);
+      localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
     }
   },
   clear: () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   },
@@ -67,8 +75,11 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   const token = tokenStore.getAccess();
+  config.headers = config.headers || {};
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
   }
   if (config.data instanceof FormData) {
     delete config.headers["Content-Type"];
@@ -95,6 +106,7 @@ apiClient.interceptors.response.use(
     const refreshToken = tokenStore.getRefresh();
     if (!refreshToken) {
       tokenStore.clear();
+      redirectToLogin();
       return Promise.reject(error);
     }
 
@@ -107,11 +119,13 @@ apiClient.interceptors.response.use(
       const { data } = await refreshPromise;
       refreshPromise = null;
       tokenStore.setTokens({ access_token: data.access_token });
+      originalRequest.headers = originalRequest.headers || {};
       originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
       return apiClient(originalRequest);
     } catch (refreshError) {
       refreshPromise = null;
       tokenStore.clear();
+      redirectToLogin();
       return Promise.reject(refreshError);
     }
   }
@@ -142,96 +156,6 @@ const accessHeaders = () => {
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 };
 
-const CART_STORAGE_KEY = "cart_items";
-
-const normalizeCartProduct = (product) => {
-  if (!product || typeof product !== "object") {
-    return null;
-  }
-
-  const id = product.id ?? product.product_id;
-
-  return {
-    ...product,
-    id,
-    name: product.name || product.title || "Product",
-    title: product.title || product.name || "Product",
-    description: product.description || "",
-    price: product.price === undefined || product.price === null || product.price === "" ? null : Number(product.price),
-    image: product.image || product.img || product.image_url || "",
-    img: product.img || product.image || product.image_url || "",
-    image_url: product.image_url || product.image || product.img || "",
-    category: product.category || product.category_name || product.category_id || "",
-    rating: product.rating ?? 4.5,
-  };
-};
-
-const readLocalCart = () => {
-  try {
-    const stored = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
-    return Array.isArray(stored) ? stored : [];
-  } catch {
-    localStorage.removeItem(CART_STORAGE_KEY);
-    return [];
-  }
-};
-
-const writeLocalCart = (items) => {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-};
-
-export const cartStore = {
-  getItems: readLocalCart,
-  saveProduct: (product, quantity = 1) => {
-    const normalizedProduct = normalizeCartProduct(product);
-
-    if (!normalizedProduct?.id) {
-      return readLocalCart();
-    }
-
-    const productId = Number(normalizedProduct.id);
-    const items = readLocalCart();
-    const existingItem = items.find((item) => Number(item.product_id ?? item.product?.id ?? item.id) === productId);
-
-    if (existingItem) {
-      existingItem.quantity = Number(existingItem.quantity || 0) + Number(quantity || 1);
-      existingItem.product = {
-        ...normalizeCartProduct(existingItem.product),
-        ...normalizedProduct,
-      };
-      existingItem.product_id = productId;
-    } else {
-      items.push({
-        id: `local-${productId}`,
-        product_id: productId,
-        quantity: Number(quantity || 1),
-        product: normalizedProduct,
-      });
-    }
-
-    writeLocalCart(items);
-    return items;
-  },
-  updateQuantity: (itemId, quantity) => {
-    const items = readLocalCart().map((item) => (
-      String(item.id) === String(itemId)
-        ? { ...item, quantity: Math.max(1, Number(quantity || 1)) }
-        : item
-    ));
-    writeLocalCart(items);
-    return items;
-  },
-  removeItem: (itemId, productId) => {
-    const items = readLocalCart().filter((item) => {
-      const itemProductId = item.product_id ?? item.product?.id ?? item.id;
-      return String(item.id) !== String(itemId) && String(itemProductId) !== String(productId);
-    });
-    writeLocalCart(items);
-    return items;
-  },
-  normalizeProduct: normalizeCartProduct,
-};
-
 export const auth = {
   saveSession: (data) => {
     tokenStore.setTokens(data);
@@ -258,10 +182,11 @@ export const api = {
   me: () => unwrap(apiClient.get("/auth/me")),
   getProducts: () => unwrap(apiClient.get("/products/")),
   getProduct: (id) => unwrap(apiClient.get(`/products/${id}`)),
-  getCategories: () => unwrap(apiClient.get("/categories/")),
-  createCategory: (payload) => unwrap(apiClient.post("/categories/", payload, accessHeaders())),
-  updateCategory: (id, payload) => unwrap(apiClient.put(`/categories/${id}`, payload, accessHeaders())),
-  deleteCategory: (id) => unwrap(apiClient.delete(`/categories/${id}`, accessHeaders())),
+  getCategories: () => unwrap(apiClient.get("/categories/get-all")),
+  getCategory: (id) => unwrap(apiClient.get(`/categories/get/${id}`)),
+  createCategory: (payload) => unwrap(apiClient.post("/categories/create", payload, accessHeaders())),
+  updateCategory: (id, payload) => unwrap(apiClient.put(`/categories/update/${id}`, payload, accessHeaders())),
+  deleteCategory: (id) => unwrap(apiClient.delete(`/categories/delete/${id}`, accessHeaders())),
   createProduct: (payload) => {
     const formData = payload instanceof FormData ? payload : new FormData();
 
@@ -277,41 +202,26 @@ export const api = {
   },
   updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload)),
   deleteProduct: (id) => unwrap(apiClient.delete(`/products/${id}`)),
-  getCart: () => unwrap(apiClient.get("/cart")),
-  addToCart: async (payload) => {
-    const quantity = Number(payload.quantity || 1);
-    cartStore.saveProduct(payload.product || payload, quantity);
-
-    try {
-      return await unwrap(apiClient.post("/cart", {
-        product_id: payload.product_id ?? payload.product?.id ?? payload.id,
-        quantity,
-      }));
-    } catch (error) {
-      return {
-        id: `local-${payload.product_id ?? payload.product?.id ?? payload.id}`,
-        product_id: payload.product_id ?? payload.product?.id ?? payload.id,
-        quantity,
-        product: cartStore.normalizeProduct(payload.product || payload),
-        localOnly: true,
-        error,
-      };
-    }
-  },
+  getCart: () => unwrap(apiClient.get("/cart/")),
+  addToCart: (payload) => unwrap(apiClient.post("/cart/", {
+    product_id: payload.product_id ?? payload.product?.id ?? payload.id,
+    quantity: Number(payload.quantity || 1),
+  })),
   removeCartItem: (id) => unwrap(apiClient.delete(`/cart/${id}`)),
-  createOrder: (payload) => unwrap(apiClient.post("/orders", payload)),
-  getOrders: () => unwrap(apiClient.get("/orders")),
-  dummyPayment: (payload) => unwrap(apiClient.post("/payments/dummy", payload)),
+  createOrder: (payload) => {
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+
+    if (items.length === 1) {
+      return unwrap(apiClient.post("/orders/single", items[0]));
+    }
+
+    return unwrap(apiClient.post("/orders/bulk", { items }));
+  },
+  getOrders: () => unwrap(apiClient.get("/orders/my-orders")),
+  createPayment: (payload) => unwrap(apiClient.post("/payments/", payload)),
 };
 
-export const categories = [
-  { id: 1, name: "Mobiles", image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80" },
-  { id: 2, name: "Electronics", image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=800&q=80" },
-  { id: 3, name: "Fashion", image: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80" },
-  { id: 4, name: "Home", image: "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=800&q=80" },
-  { id: 5, name: "Beauty", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80" },
-  { id: 6, name: "Grocery", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-];
+export const categories = [];
 
 const getCategoryImageValue = (category) => (
   category?.image_url
@@ -343,9 +253,7 @@ export const normalizeCategory = (category, index = 0) => {
     return null;
   }
 
-  const fallback = categories.find((item) => item.name.toLowerCase() === String(category.name || "").toLowerCase())
-    || categories[index % categories.length];
-  const name = String(category.name || fallback?.name || "").trim();
+  const name = String(category.name || "").trim();
 
   if (!name) {
     return null;
@@ -353,9 +261,9 @@ export const normalizeCategory = (category, index = 0) => {
 
   return {
     ...category,
-    id: category.id ?? fallback?.id ?? name,
+    id: category.id ?? name ?? index,
     name,
-    image: getCategoryImageUrl(category) || fallback?.image || "",
+    image: getCategoryImageUrl(category),
   };
 };
 
@@ -367,5 +275,5 @@ export const normalizeCategories = (items) => (
 
 export const getCategoriesWithFallback = async () => {
   const backendCategories = normalizeCategories(await api.getCategories());
-  return backendCategories.length ? backendCategories : categories;
+  return backendCategories;
 };

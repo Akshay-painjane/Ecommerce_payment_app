@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import fallbackImage from "../assets/hero.png";
-import { api, cartStore } from "../services/api.js";
+import { api, auth } from "../services/api.js";
 
 const getProductId = (item) => item.product_id ?? item.product?.id ?? item.id;
 
@@ -35,16 +35,11 @@ const normalizeCartItem = (item, product) => {
 };
 
 const hydrateCartItems = async (cartItems) => {
-  const localItems = cartStore.getItems();
-  const localByProductId = new Map(localItems.map((item) => [String(getProductId(item)), item]));
-
   return Promise.all(cartItems.map(async (item) => {
     const productId = getProductId(item);
-    const cachedItem = localByProductId.get(String(productId));
-    const cachedProduct = cachedItem?.product || cachedItem;
 
-    if (item.product || item.name || item.title || cachedProduct?.name || cachedProduct?.title) {
-      return normalizeCartItem(item, item.product || cachedProduct);
+    if (item.product || item.name || item.title) {
+      return normalizeCartItem(item, item.product);
     }
 
     if (!productId) {
@@ -61,29 +56,17 @@ const hydrateCartItems = async (cartItems) => {
 };
 
 const getDisplayCartItems = async () => {
-  const localItems = cartStore.getItems();
+  const backendItems = await api.getCart();
+  const hydratedBackendItems = await hydrateCartItems(Array.isArray(backendItems) ? backendItems : []);
 
-  try {
-    const backendItems = await api.getCart();
-    const hydratedBackendItems = await hydrateCartItems(backendItems);
-    const backendProductIds = new Set(hydratedBackendItems.map((item) => String(item.product_id)));
-    const localOnlyItems = localItems
-      .filter((item) => !backendProductIds.has(String(getProductId(item))))
-      .map((item) => normalizeCartItem(item));
-
-    return {
-      items: [...hydratedBackendItems, ...localOnlyItems],
-      error: "",
-    };
-  } catch (err) {
-    return {
-      items: (await hydrateCartItems(localItems)).map((item) => ({ ...item, localOnly: true })),
-      error: localItems.length ? "" : `${err.message}. Please login to view your cart.`,
-    };
-  }
+  return {
+    items: hydratedBackendItems,
+    error: "",
+  };
 };
 
 function Cart() {
+  const user = auth.getUser();
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -92,52 +75,76 @@ function Cart() {
     setLoading(true);
     setError("");
 
-    const result = await getDisplayCartItems();
-    setItems(result.items);
-    setError(result.error);
-    setLoading(false);
+    try {
+      const result = await getDisplayCartItems();
+      setItems(result.items);
+      setError(result.error);
+    } catch (err) {
+      setItems([]);
+      setError(err.message || "Unable to load your cart.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     let isMounted = true;
 
-    getDisplayCartItems().then((result) => {
-      if (isMounted) {
-        setItems(result.items);
-        setError(result.error);
-        setLoading(false);
-      }
-    });
+    const fetchCart = () => {
+      setLoading(true);
+      setError("");
+
+      return getDisplayCartItems()
+      .then((result) => {
+        if (isMounted) {
+          setItems(result.items);
+          setError(result.error);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setItems([]);
+          setError(err.message || "Unable to load your cart.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+    };
+
+    fetchCart();
+    window.addEventListener("pageshow", fetchCart);
+    window.addEventListener("focus", fetchCart);
 
     return () => {
       isMounted = false;
+      window.removeEventListener("pageshow", fetchCart);
+      window.removeEventListener("focus", fetchCart);
     };
   }, []);
 
   const remove = async (item) => {
-    cartStore.removeItem(item.id, item.product_id);
     setItems((current) => current.filter((cartItem) => String(cartItem.id) !== String(item.id)));
 
-    if (!String(item.id).startsWith("local-")) {
-      try {
-        await api.removeCartItem(item.id);
-      } catch (err) {
-        setError(err.message || "Could not remove item from cart.");
-        loadCart();
-      }
+    try {
+      await api.removeCartItem(item.id);
+    } catch (err) {
+      setError(err.message || "Could not remove item from cart.");
+      loadCart();
     }
   };
 
-  const changeQuantity = (id, delta) => {
-    setItems((current) => current.map((item) => {
-      if (String(item.id) !== String(id)) {
-        return item;
-      }
+  const addOne = async (item) => {
+    setError("");
 
-      const quantity = Math.max(1, Number(item.quantity || 1) + delta);
-      cartStore.updateQuantity(item.id, quantity);
-      return { ...item, quantity };
-    }));
+    try {
+      await api.addToCart({ product_id: item.product_id, quantity: 1 });
+      loadCart();
+    } catch (err) {
+      setError(err.message || "Could not update cart quantity.");
+    }
   };
 
   const total = useMemo(() => items.reduce((sum, item) => {
@@ -149,14 +156,21 @@ function Cart() {
   return (
     <section className="cart-page page-section">
       <div className="cart-list">
-        <h1>Shopping Cart</h1>
+        <div className="cart-header-panel">
+          <div>
+            <span>Shopping Cart</span>
+            <h1>Your Basket</h1>
+            <p>{user?.email || user?.name || "Signed-in user"} - backend-synced cart</p>
+          </div>
+          <strong>{items.length} items</strong>
+        </div>
         {error && <p className="alert">{error}</p>}
         {loading && <p className="loading">Loading cart...</p>}
 
         {!loading && items.length === 0 && (
-          <div className="summary-box">
+          <div className="empty-state">
             <h2>Your cart is empty</h2>
-            <p>Find something you love and add it here for a faster checkout.</p>
+            <p>Items added while signed in will appear here and stay with this account.</p>
             <Link className="primary-link" to="/products">Shop products</Link>
           </div>
         )}
@@ -170,7 +184,10 @@ function Cart() {
             <article className="cart-item" key={item.id}>
               <img src={product.image} alt={product.name} />
               <div>
-                <h3>{product.name}</h3>
+                <div className="cart-item-title">
+                  <h3>{product.name}</h3>
+                  <span>Cart #{item.id}</span>
+                </div>
                 <p>{product.description}</p>
                 <div className="rating">Rating {Number(product.rating || 4.5).toFixed(1)} / 5</div>
                 <strong>
@@ -180,9 +197,8 @@ function Cart() {
                   Subtotal: {lineTotal === null ? "Price unavailable" : `Rs. ${lineTotal.toLocaleString("en-IN")}`}
                 </p>
                 <div className="quantity-row">
-                  <button onClick={() => changeQuantity(item.id, -1)} type="button">-</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => changeQuantity(item.id, 1)} type="button">+</button>
+                  <span className="quantity-pill">Qty {item.quantity}</span>
+                  <button onClick={() => addOne(item)} type="button">+ Add one</button>
                   <button className="link-button" onClick={() => remove(item)} type="button">Remove</button>
                 </div>
               </div>
@@ -192,11 +208,13 @@ function Cart() {
       </div>
       <aside className="summary-box">
         <h2>Subtotal</h2>
+        <p>{items.length} account-specific cart items</p>
         <strong>{hasPricedItems ? `Rs. ${total.toLocaleString("en-IN")}` : "Price unavailable"}</strong>
-        <Link className="primary-link" to="/checkout">Proceed to Buy</Link>
+        <Link className={`primary-link ${items.length ? "" : "disabled-link"}`} to={items.length ? "/checkout" : "/products"}>Proceed to Buy</Link>
       </aside>
     </section>
   );
 }
 
 export default Cart;
+

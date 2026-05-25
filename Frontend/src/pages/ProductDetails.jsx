@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api } from "../services/api.js";
+import { api, auth } from "../services/api.js";
 
 function ProductDetails() {
   const navigate = useNavigate();
@@ -21,20 +21,24 @@ function ProductDetails() {
   }, [id]);
 
   const addToCart = async () => {
+    if (!auth.isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
     await api.addToCart({
       product_id: Number(id),
       quantity,
-      product,
     });
     setMessage("Added to cart");
   };
 
   const buyNow = async () => {
-    await api.addToCart({
-      product_id: Number(id),
-      quantity,
-      product,
-    });
+    if (!auth.isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
     navigate(`/checkout?product=${id}`);
   };
 

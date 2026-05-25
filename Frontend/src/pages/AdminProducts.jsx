@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminSidebar.jsx";
-import { api, categories } from "../services/api.js";
+import { api, getCategoriesWithFallback } from "../services/api.js";
 
 function AdminProducts() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -14,10 +15,11 @@ function AdminProducts() {
   useEffect(() => {
     let active = true;
 
-    api.getProducts()
-      .then((data) => {
+    Promise.all([api.getProducts(), getCategoriesWithFallback()])
+      .then(([productData, categoryData]) => {
         if (active) {
-          setProducts(data);
+          setProducts(Array.isArray(productData) ? productData : []);
+          setCategories(categoryData);
         }
       })
       .catch((err) => {
@@ -109,7 +111,7 @@ function AdminProducts() {
               {!loading && products.map((product) => (
                 <tr key={product.id}>
                   <td><img src={product.image_url} alt={product.name} />{product.name}</td>
-                  <td>{categories.find((item) => item.id === product.category_id)?.name}</td>
+                  <td>{categories.find((item) => String(item.id) === String(product.category_id))?.name || `Category #${product.category_id}`}</td>
                   <td>Rs. {Number(product.price).toLocaleString("en-IN")}</td>
                   <td>{product.stock}</td>
                   <td>{Number(product.rating || 4.5).toFixed(1)}</td>
