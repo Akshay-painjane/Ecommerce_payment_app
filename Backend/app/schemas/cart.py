@@ -8,6 +8,13 @@ class CartCreate(BaseModel):
     quantity: int
 
 
+# Update Cart Quantity
+
+class CartUpdate(BaseModel):
+
+    quantity: int
+
+
 class BulkCartCreate(BaseModel):
 
     items: list[CartCreate]

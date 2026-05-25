@@ -9,13 +9,11 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 
 from app.schemas.order import (
-    SingleOrderCreate,
     BulkOrderCreate,
     OrderOut
 )
 
 from app.crud.order import (
-    create_single_order,
     create_bulk_order,
     get_user_orders,
     get_all_orders,
@@ -32,102 +30,93 @@ router = APIRouter(
     tags=["Orders"]
 )
 
-# -----------------------------
-# Single product order
-# -----------------------------
+
+# Place Order
+# Supports single and multiple products
 
 @router.post(
-    "/single",
+    "/",
     response_model=OrderOut,
     status_code=201
 )
-def place_single_order(
-    order: SingleOrderCreate,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
+def place_order(
 
-    return create_single_order(
-        db,
-        current_user.id,
-        order
-    )
-
-
-# -----------------------------
-# Bulk product order
-# -----------------------------
-
-@router.post(
-    "/bulk",
-    response_model=OrderOut,
-    status_code=201
-)
-def place_bulk_order(
     order: BulkOrderCreate,
+
     db: Session = Depends(get_db),
+
     current_user = Depends(get_current_user)
 ):
 
     return create_bulk_order(
+
         db,
+
         current_user.id,
+
         order
     )
 
 
-# -----------------------------
 # Get My Orders
-# -----------------------------
 
 @router.get(
     "/my-orders",
     response_model=list[OrderOut]
 )
 def get_my_orders(
+
     db: Session = Depends(get_db),
+
     current_user = Depends(get_current_user)
 ):
 
     return get_user_orders(
+
         db,
+
         current_user.id
     )
 
 
-# -----------------------------
 # Admin Get All Orders
-# -----------------------------
 
 @router.get(
     "/all",
     response_model=list[OrderOut]
 )
 def get_all_orders_api(
+
     db: Session = Depends(get_db),
+
     current_user = Depends(admin_required)
 ):
 
     return get_all_orders(db)
 
 
-# -----------------------------
 # Update Order Status
-# -----------------------------
 
 @router.put(
     "/{order_id}/status"
 )
 def update_order_status_api(
+
     order_id: int,
+
     status: str,
+
     db: Session = Depends(get_db),
+
     current_user = Depends(admin_required)
 ):
 
     order = update_order_status(
+
         db,
+
         order_id,
+
         status
     )
 
