@@ -8,9 +8,9 @@ import HorizontalScroller from "../components/HorizontalScroller.jsx";
 import PromoBanner from "../components/PromoBanner.jsx";
 
 const promoBanners = [
-  { kicker: "Bank offer", title: "10% instant discount", text: "On selected cards and checkout deals", to: "/products", tone: "green" },
-  { kicker: "Prime-style perks", title: "Fast dummy checkout", text: "Smooth cart, orders, and payment flow", to: "/cart", tone: "blue" },
-  { kicker: "New arrivals", title: "Browse live catalog", text: "Only products from your store database", to: "/products", tone: "pink" },
+  { kicker: "Bank offer", title: "10% instant discount", text: "On selected cards and checkout deals", to: "/products", tone: "green", icon: "10%" },
+  { kicker: "Prime-style perks", title: "Secure & Smooth Checkout", text: "Easy cart, secure orders, and quick payment experience", to: "/cart", tone: "blue", icon: "OK" },
+  { kicker: "New arrivals", title: "Browse live catalog", text: "Only products from your store database", to: "/products", tone: "pink", icon: "New" },
 ];
 
 const getCategoryName = (product) => {

@@ -90,17 +90,15 @@ function OfferCard({ item }) {
       </div>
       <div className="offer-card-body">
         <span className="offer-title">{item.name}</span>
-        {rating && (
-          <div className="star-rating" aria-label={`${rating} out of 5 stars`}>
+        <div className={`star-rating${rating ? "" : " card-slot-empty"}`} aria-label={rating ? `${rating} out of 5 stars` : undefined} aria-hidden={rating ? undefined : "true"}>
             <span>*****</span>
             <strong>{rating}</strong>
-          </div>
-        )}
+        </div>
         <div className="offer-price-row">
           <strong>Rs. {Number(item.price).toLocaleString("en-IN")}</strong>
           {hasOldPrice && <s>Rs. {Number(item.oldPrice).toLocaleString("en-IN")}</s>}
         </div>
-        {item.offerText && <span className="offer-text">{item.offerText}</span>}
+        <span className={`offer-text${item.offerText ? "" : " card-slot-empty"}`}>{item.offerText || " "}</span>
         <div className="offer-actions">
           <button
             className="offer-cta"
