@@ -160,7 +160,7 @@ function Cart() {
           <div>
             <span>Shopping Cart</span>
             <h1>Your Basket</h1>
-            <p>{user?.email || user?.name || "Signed-in user"} - backend-synced cart</p>
+            <p>{user?.email || user?.name || "Signed-in user"} - your saved basket</p>
           </div>
           <strong>{items.length} items</strong>
         </div>

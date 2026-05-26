@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, tokenStore } from "../services/api.js";
 
@@ -10,6 +10,7 @@ function Checkout() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
+  const placingRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -95,6 +96,16 @@ function Checkout() {
   }, [items]);
 
   const placeOrder = async () => {
+    if (placingRef.current || placing || loading) {
+      return;
+    }
+
+    if (!items.length) {
+      setError("Your checkout has no items.");
+      return;
+    }
+
+    placingRef.current = true;
     setPlacing(true);
     setError("");
 
@@ -111,6 +122,13 @@ function Checkout() {
         .filter((item) => item.product_id),
     };
 
+    if (!payload.items.length) {
+      setError("Unable to place order because product details are missing.");
+      setPlacing(false);
+      placingRef.current = false;
+      return;
+    }
+
     try {
       const order = await api.createOrder(payload);
       navigate("/payment", { state: { order, amount: total } });
@@ -118,6 +136,7 @@ function Checkout() {
       setError(err.message || "Unable to place order.");
     } finally {
       setPlacing(false);
+      placingRef.current = false;
     }
   };
 
@@ -173,7 +192,7 @@ function Checkout() {
         <p>Delivery: Free</p>
         <strong>Total: Rs. {total.toLocaleString("en-IN")}</strong>
 
-        <button disabled={!items.length || loading || placing} onClick={placeOrder} type="button">
+        <button disabled={!items.length || loading || placing} aria-busy={placing} onClick={placeOrder} type="button">
           {placing ? "Creating order..." : "Continue to Payment"}
         </button>
       </aside>
