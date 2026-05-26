@@ -66,12 +66,12 @@ function HeroCarousel() {
 
   return (
     <section className="hero-carousel" aria-label="Featured offers">
-      <div className="hero-carousel-track" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
+      <div className="hero-carousel-track" style={{ transform: `translate3d(-${activeSlide * 100}%, 0, 0)` }}>
         {slides.map((slide) => (
           <article
             className="hero-slide"
             key={slide.title}
-            style={{ backgroundImage: `linear-gradient(90deg, rgba(6, 18, 38, .9), rgba(6, 18, 38, .42), rgba(6, 18, 38, .08)), url(${slide.image})` }}
+            style={{ backgroundImage: `linear-gradient(90deg, rgba(5, 16, 34, .94), rgba(5, 16, 34, .58), rgba(5, 16, 34, .22)), url(${slide.image})` }}
           >
             <div className="hero-slide-copy">
               <span style={{ color: slide.accent }}>{slide.eyebrow}</span>

@@ -11,6 +11,8 @@ function OfferCard({ item }) {
   const rating = item.rating ? Number(item.rating).toFixed(1) : "";
   const hasDiscount = Boolean(item.discount);
   const hasOldPrice = Number(item.oldPrice || 0) > Number(item.price || 0);
+  const stock = Number(item.stock || 0);
+  const stockLabel = stock > 0 && stock < 5 ? "Limited Stock" : stock > 0 ? "In Stock" : "";
   const productUrl = item.id ? `/products/${item.id}` : "";
 
   if (!item.id) {
@@ -84,9 +86,20 @@ function OfferCard({ item }) {
   return (
     <article className="offer-card" onClick={openDetails} onKeyDown={onKeyDown} role="link" tabIndex={0}>
       {message && <div className="toast-message success offer-toast" role="status">{message}</div>}
+      <button
+        className="wishlist-button"
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+        type="button"
+        aria-label={`Add ${item.name} to wishlist`}
+      >
+        ♡
+      </button>
       <div className="offer-image-wrap">
-        {item.image ? <img src={item.image} alt={item.name} /> : <span className="product-image-placeholder">No image</span>}
+        {item.image ? <img src={item.image} alt={item.name} loading="lazy" /> : <span className="product-image-placeholder">No image</span>}
         {hasDiscount && <span className="discount-badge">{item.discount}</span>}
+        {stockLabel && <span className={`stock-badge${stock < 5 ? " limited" : ""}`}>{stockLabel}</span>}
+        <span className="quick-view-overlay">Quick view</span>
       </div>
       <div className="offer-card-body">
         <span className="offer-title">{item.name}</span>

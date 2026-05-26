@@ -7,6 +7,7 @@ function Navbar() {
   const location = useLocation();
   const user = auth.getUser();
   const [navCategories, setNavCategories] = useState([]);
+  const [scrolled, setScrolled] = useState(false);
 
   const isAdmin = user?.role === "admin";
   const routeCategory = location.pathname.startsWith("/category/")
@@ -32,6 +33,17 @@ function Navbar() {
     return () => {
       active = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const onSearch = (event) => {
@@ -60,7 +72,7 @@ function Navbar() {
   };
 
   return (
-    <header className="topbar">
+    <header className={`topbar${scrolled ? " scrolled" : ""}`}>
       <div className="nav-main">
         <Link className="brand" to="/home">Style Store</Link>
 

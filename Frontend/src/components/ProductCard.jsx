@@ -35,6 +35,8 @@ function ProductCard({ product }) {
   const discount = explicitDiscount || derivedDiscount;
   const categoryName = getCategoryName(product);
   const offerText = getOfferText(product);
+  const stock = Number(product.stock || 0);
+  const stockLabel = stock > 0 && stock < 5 ? "Limited Stock" : stock > 0 ? "In Stock" : "";
 
   const addToCart = async () => {
     if (!auth.isAuthenticated()) {
@@ -60,9 +62,12 @@ function ProductCard({ product }) {
 
   return (
     <article className="product-card">
+      <button className="wishlist-button" type="button" aria-label={`Add ${product.name} to wishlist`}>♡</button>
       <Link to={`/products/${product.id}`} className="product-image-wrap">
-        {product.image_url ? <img src={product.image_url} alt={product.name} /> : <span className="product-image-placeholder">No image</span>}
+        {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <span className="product-image-placeholder">No image</span>}
         {discount > 0 && <span className="discount-badge">{discount}% OFF</span>}
+        {stockLabel && <span className={`stock-badge${stock < 5 ? " limited" : ""}`}>{stockLabel}</span>}
+        <span className="quick-view-overlay">Quick view</span>
       </Link>
       <div className="product-card-body">
         <span className={`offer-category${categoryName ? "" : " card-slot-empty"}`}>{categoryName || " "}</span>
