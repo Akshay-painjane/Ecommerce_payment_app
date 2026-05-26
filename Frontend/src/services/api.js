@@ -12,7 +12,16 @@ const redirectToLogin = () => {
 
 export const tokenStore = {
   getAccess: () => localStorage.getItem(ACCESS_TOKEN_KEY),
-  getRefresh: () => localStorage.getItem(REFRESH_TOKEN_KEY),
+  getRefresh: () => {
+    const token = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+    if (!token || token === "undefined" || token === "null") {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      return null;
+    }
+
+    return token;
+  },
   setTokens: ({ access_token, refresh_token }) => {
     if (access_token) {
       localStorage.setItem(ACCESS_TOKEN_KEY, access_token);
@@ -113,9 +122,11 @@ apiClient.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      refreshPromise = refreshPromise || axios.post(`${API_BASE_URL}/auth/refresh`, {
-        refresh_token: refreshToken,
-      });
+      refreshPromise = refreshPromise || axios.post(
+        `${API_BASE_URL}/auth/refresh`,
+        { refresh_token: refreshToken },
+        { headers: { "Content-Type": "application/json" } }
+      );
       const { data } = await refreshPromise;
       refreshPromise = null;
       tokenStore.setTokens({ access_token: data.access_token });
@@ -210,12 +221,7 @@ export const api = {
   removeCartItem: (id) => unwrap(apiClient.delete(`/cart/${id}`)),
   createOrder: (payload) => {
     const items = Array.isArray(payload?.items) ? payload.items : [];
-
-    if (items.length === 1) {
-      return unwrap(apiClient.post("/orders/single", items[0]));
-    }
-
-    return unwrap(apiClient.post("/orders/bulk", { items }));
+    return unwrap(apiClient.post("/orders/", { items }));
   },
   getOrders: () => unwrap(apiClient.get("/orders/my-orders")),
   createPayment: (payload) => unwrap(apiClient.post("/payments/", payload)),

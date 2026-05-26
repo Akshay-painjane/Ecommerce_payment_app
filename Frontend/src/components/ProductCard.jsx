@@ -2,10 +2,39 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, auth } from "../services/api.js";
 
+const getCategoryName = (product) => {
+  if (typeof product.category === "string") {
+    return product.category;
+  }
+
+  return product.category?.name || product.category_name || product.categoryName || "";
+};
+
+const getDiscountValue = (product) => {
+  const rawDiscount = product.discount || product.discount_percent || product.discountPercentage || "";
+  const numericDiscount = Number(String(rawDiscount).replace(/[^\d.]/g, ""));
+
+  return Number.isFinite(numericDiscount) ? numericDiscount : 0;
+};
+
+const getOfferText = (product) => {
+  const offerText = product.offer_text || product.offerText || product.offer || product.deal_label || product.dealLabel || product.badge_text || product.badgeText || "";
+
+  return typeof offerText === "string" ? offerText.trim() : "";
+};
+
 function ProductCard({ product }) {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [adding, setAdding] = useState(false);
+  const price = Number(product.price || 0);
+  const rating = product.rating ? Number(product.rating).toFixed(1) : "";
+  const oldPrice = Number(product.old_price || product.oldPrice || product.mrp || product.original_price || 0);
+  const explicitDiscount = getDiscountValue(product);
+  const derivedDiscount = oldPrice > price && price > 0 ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
+  const discount = explicitDiscount || derivedDiscount;
+  const categoryName = getCategoryName(product);
+  const offerText = getOfferText(product);
 
   const addToCart = async () => {
     if (!auth.isAuthenticated()) {
@@ -33,12 +62,17 @@ function ProductCard({ product }) {
     <article className="product-card">
       <Link to={`/products/${product.id}`} className="product-image-wrap">
         {product.image_url ? <img src={product.image_url} alt={product.name} /> : <span className="product-image-placeholder">No image</span>}
+        {discount > 0 && <span className="discount-badge">{discount}% OFF</span>}
       </Link>
       <div className="product-card-body">
+        {categoryName && <span className="offer-category">{categoryName}</span>}
         <Link className="product-title" to={`/products/${product.id}`}>{product.name}</Link>
-        <p>{product.description}</p>
-        <div className="rating">Rating {Number(product.rating || 4.5).toFixed(1)} / 5</div>
-        <strong className="price">Rs. {Number(product.price).toLocaleString("en-IN")}</strong>
+        {rating && <div className="star-rating"><span>*****</span><strong>{rating}</strong></div>}
+        <div className="catalog-price-row">
+          <strong className="price">Rs. {price.toLocaleString("en-IN")}</strong>
+          {oldPrice > price && <s>Rs. {oldPrice.toLocaleString("en-IN")}</s>}
+        </div>
+        {offerText && <span className="offer-text">{offerText}</span>}
         {message && <small className="product-card-message">{message}</small>}
         <div className="product-actions">
           <button disabled={adding} onClick={addToCart} type="button">{adding ? "Adding..." : "Add to Cart"}</button>
@@ -50,4 +84,3 @@ function ProductCard({ product }) {
 }
 
 export default ProductCard;
-
