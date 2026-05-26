@@ -211,7 +211,7 @@ export const api = {
 
     return unwrap(apiClient.post("/products/", formData));
   },
-  updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload)),
+  updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload, accessHeaders())),
   deleteProduct: (id) => unwrap(apiClient.delete(`/products/${id}`)),
   getCart: () => unwrap(apiClient.get("/cart/")),
   addToCart: (payload) => unwrap(apiClient.post("/cart/", {

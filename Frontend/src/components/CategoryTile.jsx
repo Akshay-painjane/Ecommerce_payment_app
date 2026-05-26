@@ -18,7 +18,7 @@ function CategoryTile({ category }) {
   return (
     <article className="category-tile" onClick={openCategory} onKeyDown={onKeyDown} role="link" tabIndex={0}>
       {category.image ? <img src={category.image} alt={category.name} /> : <span>{category.name.slice(0, 1)}</span>}
-      <strong>{category.name}</strong>
+      <strong title={category.name}>{category.name}</strong>
       <button
         onClick={(event) => {
           event.stopPropagation();

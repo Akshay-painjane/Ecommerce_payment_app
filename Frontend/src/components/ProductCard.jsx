@@ -65,15 +65,17 @@ function ProductCard({ product }) {
         {discount > 0 && <span className="discount-badge">{discount}% OFF</span>}
       </Link>
       <div className="product-card-body">
-        {categoryName && <span className="offer-category">{categoryName}</span>}
+        <span className={`offer-category${categoryName ? "" : " card-slot-empty"}`}>{categoryName || " "}</span>
         <Link className="product-title" to={`/products/${product.id}`}>{product.name}</Link>
-        {rating && <div className="star-rating"><span>*****</span><strong>{rating}</strong></div>}
+        <div className={`star-rating${rating ? "" : " card-slot-empty"}`} aria-hidden={rating ? undefined : "true"}>
+          <span>*****</span><strong>{rating}</strong>
+        </div>
         <div className="catalog-price-row">
           <strong className="price">Rs. {price.toLocaleString("en-IN")}</strong>
           {oldPrice > price && <s>Rs. {oldPrice.toLocaleString("en-IN")}</s>}
         </div>
-        {offerText && <span className="offer-text">{offerText}</span>}
-        {message && <small className="product-card-message">{message}</small>}
+        <span className={`offer-text${offerText ? "" : " card-slot-empty"}`}>{offerText || " "}</span>
+        <small className="product-card-message" aria-live="polite">{message}</small>
         <div className="product-actions">
           <button disabled={adding} onClick={addToCart} type="button">{adding ? "Adding..." : "Add to Cart"}</button>
           <Link className="buy-now" to={`/checkout?product=${product.id}`}>Buy Now</Link>

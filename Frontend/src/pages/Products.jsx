@@ -93,7 +93,7 @@ function Products() {
   const visibleProducts = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <section className="page-section">
+    <section className="page-section catalog-page">
       <div className="section-heading">
         <div>
           <h1>{activeCategoryName || "All products"}</h1>
