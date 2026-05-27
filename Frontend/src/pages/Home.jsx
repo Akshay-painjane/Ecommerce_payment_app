@@ -71,6 +71,7 @@ const toOfferProduct = (product) => {
     discount: discount > 0 ? `${discount}% OFF` : "",
     offerText: getOfferText(product),
     rating: product.rating,
+    stock: product.stock,
     image: product.image_url,
     to: `/products/${product.id}`,
   };
@@ -151,7 +152,7 @@ function Home() {
       <div className="floating-shortcuts" aria-busy={categoriesLoading}>
         {homeCategories.slice(0, 6).map((category) => (
           <Link className="shortcut-card" key={category.id} to={`/category/${encodeURIComponent(category.name)}`}>
-            {category.image && <img src={category.image} alt={category.name} />}
+            {category.image && <img src={category.image} alt={category.name} loading="lazy" />}
             <span>{category.name}</span>
             <strong>Shop now</strong>
           </Link>

@@ -12,6 +12,7 @@ function Footer() {
   const user = auth.getUser();
   const isAdmin = user?.role === "admin";
   const isUser = Boolean(user) && user?.role !== "admin";
+  const accountPath = user ? "/account" : "/login";
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -35,7 +36,7 @@ function Footer() {
         <div className="footer-grid">
           <section>
             <h3>Get to Know Us</h3>
-            <Link to="/home">About Style Store</Link>
+            <Link to="/about">About Style Store</Link>
             <Link to="/products">Products</Link>
 
             {!isAdmin && (
@@ -92,10 +93,11 @@ function Footer() {
 
             {!isAdmin && (
               <>
-                <Link to="/login">Your Account</Link>
-                {isUser && <Link to="/cart">Returns Centre</Link>}
-                <Link to="/products">Shipping Rates</Link>
-                {isUser && <Link to="/payment">Payment Help</Link>}
+                <Link to={accountPath}>Your Account</Link>
+                <Link to="/returns">Returns Centre</Link>
+                <Link to="/shipping-rates">Shipping Rates</Link>
+                <Link to="/payment-help">Payment Help</Link>
+                <Link to="/contact">Contact Support</Link>
               </>
             )}
 
@@ -112,6 +114,10 @@ function Footer() {
 
         <div className="footer-bottom">
           <strong>Style Store</strong>
+          <div className="footer-contact">
+            <a href="mailto:monikachebrolu1@gmail.com">monikachebrolu1@gmail.com</a>
+            <a href="mailto:deepthiupadhyayula@gmail.com">deepthiupadhyayula@gmail.com</a>
+          </div>
 
           <div className="socials" aria-label="Social links">
             {socialLinks.map((link) => (

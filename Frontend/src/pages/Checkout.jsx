@@ -2,11 +2,57 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, tokenStore } from "../services/api.js";
 
+const getProductId = (item) => (
+  item?.product_id
+  ?? item?.productId
+  ?? item?.product?.id
+  ?? item?.product?.product_id
+);
+
+const getProductPrice = (product, item) => {
+  const value = product?.price
+    ?? product?.sale_price
+    ?? product?.unit_price
+    ?? item?.price
+    ?? item?.unit_price
+    ?? item?.product_price;
+
+  const price = Number(value);
+  return Number.isFinite(price) ? price : 0;
+};
+
+const normalizeCheckoutItem = (item, product) => {
+  const productId = getProductId(item) ?? product?.id;
+  const productData = product && typeof product === "object" ? product : item?.product;
+  const quantity = Number(item?.quantity ?? item?.qty ?? 1);
+
+  return {
+    ...item,
+    product_id: productId,
+    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+    product: {
+      ...productData,
+      id: productData?.id ?? productId,
+      name: productData?.name || productData?.title || item?.name || item?.title || `Product #${productId}`,
+      price: getProductPrice(productData, item),
+    },
+  };
+};
+
+const deliveryOptions = [
+  { location: "Bengaluru", charge: 0 },
+  { location: "Hyderabad", charge: 50 },
+  { location: "Mumbai", charge: 80 },
+  { location: "Delhi", charge: 100 },
+  { location: "Other", charge: 120 },
+];
+
 function Checkout() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [address, setAddress] = useState("221B Blue Avenue, Bengaluru, Karnataka 560001");
+  const [deliveryLocation, setDeliveryLocation] = useState("Bengaluru");
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +73,7 @@ function Checkout() {
 
       if (productId) {
         const product = await api.getProduct(productId);
-        return [{ product, quantity: 1 }];
+        return [normalizeCheckoutItem({ product_id: productId, quantity: 1 }, product)];
       }
 
       const cartItems = await api.getCart();
@@ -36,14 +82,19 @@ function Checkout() {
 
       const itemsWithProducts = await Promise.all(
         cartList.map(async (item) => {
-          const id = item.product_id || item.product?.id || item.id;
-          const product = item.product || (id ? await api.getProduct(id) : null);
+          const id = getProductId(item);
+          let product = item.product && typeof item.product === "object" ? item.product : null;
+          const needsProductDetails = id && (!product || !product.name || product.price === undefined || product.price === null);
 
-          return {
-            ...item,
-            product,
-            quantity: Number(item.quantity || 1),
-          };
+          if (needsProductDetails) {
+            try {
+              product = await api.getProduct(id);
+            } catch {
+              product = product || null;
+            }
+          }
+
+          return normalizeCheckoutItem(item, product);
         })
       );
 
@@ -89,11 +140,13 @@ function Checkout() {
   const total = useMemo(() => {
     return items.reduce((sum, item) => {
       const product = item.product || item;
-      const price = Number(product?.price || 0);
+      const price = getProductPrice(product, item);
       const quantity = Number(item.quantity || 1);
       return sum + price * quantity;
     }, 0);
   }, [items]);
+  const deliveryCharge = deliveryOptions.find((option) => option.location === deliveryLocation)?.charge ?? 120;
+  const finalTotal = total + deliveryCharge;
 
   const placeOrder = async () => {
     if (placingRef.current || placing || loading) {
@@ -131,7 +184,7 @@ function Checkout() {
 
     try {
       const order = await api.createOrder(payload);
-      navigate("/payment", { state: { order, amount: total } });
+      navigate("/payment", { state: { order, amount: finalTotal } });
     } catch (err) {
       setError(err.message || "Unable to place order.");
     } finally {
@@ -147,7 +200,7 @@ function Checkout() {
           <div>
             <span>Secure Checkout</span>
             <h1>Review your order</h1>
-            <p>Orders are created against the currently signed-in account.</p>
+            <p>Confirm your delivery details and review your items before payment.</p>
           </div>
           <strong>{items.length} items</strong>
         </div>
@@ -156,6 +209,16 @@ function Checkout() {
 
         <section className="checkout-panel">
           <h2>Delivery address</h2>
+          <label className="delivery-location-field">
+            Delivery location
+            <select value={deliveryLocation} onChange={(event) => setDeliveryLocation(event.target.value)}>
+              {deliveryOptions.map((option) => (
+                <option key={option.location} value={option.location}>
+                  {option.location} {option.charge === 0 ? "- Free delivery" : `- Rs. ${option.charge}`}
+                </option>
+              ))}
+            </select>
+          </label>
           <textarea value={address} onChange={(e) => setAddress(e.target.value)} />
         </section>
 
@@ -167,13 +230,13 @@ function Checkout() {
           ) : items.length === 0 ? (
             <div className="empty-state compact">
               <h2>No checkout items</h2>
-              <p>Add products to your cart or use Buy Now from a product page.</p>
+              <p>Your checkout is waiting for something you love. Add products to your basket or choose Buy Now from a product page.</p>
             </div>
           ) : (
             items.map((item, index) => {
               const product = item.product || item;
               const quantity = Number(item.quantity || 1);
-              const price = Number(product?.price || 0);
+              const price = getProductPrice(product, item);
 
               return (
                 <div className="checkout-item" key={product?.id || item.product_id || index}>
@@ -189,8 +252,8 @@ function Checkout() {
       <aside className="summary-box">
         <h2>Order Summary</h2>
         <p>Items: Rs. {total.toLocaleString("en-IN")}</p>
-        <p>Delivery: Free</p>
-        <strong>Total: Rs. {total.toLocaleString("en-IN")}</strong>
+        <p>Delivery to {deliveryLocation}: {deliveryCharge === 0 ? "Free" : `Rs. ${deliveryCharge.toLocaleString("en-IN")}`}</p>
+        <strong>Total: Rs. {finalTotal.toLocaleString("en-IN")}</strong>
 
         <button disabled={!items.length || loading || placing} aria-busy={placing} onClick={placeOrder} type="button">
           {placing ? "Creating order..." : "Continue to Payment"}
