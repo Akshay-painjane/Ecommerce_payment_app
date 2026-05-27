@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, auth } from "../services/api.js";
 
@@ -8,12 +8,45 @@ function OfferCard({ item }) {
   const [message, setMessage] = useState("");
   const [adding, setAdding] = useState(false);
   const [buying, setBuying] = useState(false);
+  const [wishlistItemId, setWishlistItemId] = useState(null);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
   const rating = item.rating ? Number(item.rating).toFixed(1) : "";
   const hasDiscount = Boolean(item.discount);
   const hasOldPrice = Number(item.oldPrice || 0) > Number(item.price || 0);
   const stock = Number(item.stock || 0);
   const stockLabel = stock > 0 && stock < 5 ? "Limited Stock" : stock > 0 ? "In Stock" : "";
   const productUrl = item.id ? `/products/${item.id}` : "";
+
+  useEffect(() => {
+    let active = true;
+
+    if (!auth.isAuthenticated() || !item.id) {
+      return () => {
+        active = false;
+      };
+    }
+
+    api.getWishlist()
+      .then((items) => {
+        if (!active) {
+          return;
+        }
+
+        const match = Array.isArray(items)
+          ? items.find((entry) => String(entry.product_id ?? entry.product?.id) === String(item.id))
+          : null;
+        setWishlistItemId(match?.id ?? null);
+      })
+      .catch(() => {
+        if (active) {
+          setWishlistItemId(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [item.id]);
 
   if (!item.id) {
     return null;
@@ -54,6 +87,32 @@ function OfferCard({ item }) {
     }
   };
 
+  const toggleWishlist = async () => {
+    if (!auth.isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
+    setWishlistBusy(true);
+
+    try {
+      if (wishlistItemId) {
+        await api.removeFromWishlist(wishlistItemId);
+        setWishlistItemId(null);
+        showMessage("Removed from wishlist");
+      } else {
+        const wishlistItem = await api.addToWishlist(item.id);
+        setWishlistItemId(wishlistItem?.id ?? true);
+        showMessage("Saved to wishlist");
+      }
+      window.dispatchEvent(new CustomEvent("wishlist:updated"));
+    } catch (err) {
+      showMessage(err.message || "Unable to update wishlist");
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
+
   const buyNow = async () => {
     if (!auth.isAuthenticated()) {
       navigate("/login");
@@ -87,13 +146,18 @@ function OfferCard({ item }) {
     <article className="offer-card" onClick={openDetails} onKeyDown={onKeyDown} role="link" tabIndex={0}>
       {message && <div className="toast-message success offer-toast" role="status">{message}</div>}
       <button
-        className="wishlist-button"
-        onClick={(event) => event.stopPropagation()}
+        className={`wishlist-button${wishlistItemId ? " active" : ""}`}
+        disabled={wishlistBusy}
+        onClick={(event) => {
+          event.stopPropagation();
+          toggleWishlist();
+        }}
         onPointerDown={(event) => event.stopPropagation()}
         type="button"
-        aria-label={`Add ${item.name} to wishlist`}
+        aria-label={`${wishlistItemId ? "Remove" : "Add"} ${item.name} ${wishlistItemId ? "from" : "to"} wishlist`}
+        title={wishlistItemId ? "Remove from wishlist" : "Add to wishlist"}
       >
-        ♡
+        <span aria-hidden="true">{wishlistItemId ? "\u2665" : "\u2661"}</span>
       </button>
       <div className="offer-image-wrap">
         {item.image ? <img src={item.image} alt={item.name} loading="lazy" /> : <span className="product-image-placeholder">No image</span>}
@@ -104,8 +168,8 @@ function OfferCard({ item }) {
       <div className="offer-card-body">
         <span className="offer-title">{item.name}</span>
         <div className={`star-rating${rating ? "" : " card-slot-empty"}`} aria-label={rating ? `${rating} out of 5 stars` : undefined} aria-hidden={rating ? undefined : "true"}>
-            <span>*****</span>
-            <strong>{rating}</strong>
+          <span>*****</span>
+          <strong>{rating}</strong>
         </div>
         <div className="offer-price-row">
           <strong>Rs. {Number(item.price).toLocaleString("en-IN")}</strong>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, auth } from "../services/api.js";
 
@@ -27,6 +27,8 @@ function ProductCard({ product }) {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [adding, setAdding] = useState(false);
+  const [wishlistItemId, setWishlistItemId] = useState(null);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
   const price = Number(product.price || 0);
   const rating = product.rating ? Number(product.rating).toFixed(1) : "";
   const oldPrice = Number(product.old_price || product.oldPrice || product.mrp || product.original_price || 0);
@@ -37,6 +39,37 @@ function ProductCard({ product }) {
   const offerText = getOfferText(product);
   const stock = Number(product.stock || 0);
   const stockLabel = stock > 0 && stock < 5 ? "Limited Stock" : stock > 0 ? "In Stock" : "";
+
+  useEffect(() => {
+    let active = true;
+
+    if (!auth.isAuthenticated() || !product.id) {
+      return () => {
+        active = false;
+      };
+    }
+
+    api.getWishlist()
+      .then((items) => {
+        if (!active) {
+          return;
+        }
+
+        const match = Array.isArray(items)
+          ? items.find((item) => String(item.product_id ?? item.product?.id) === String(product.id))
+          : null;
+        setWishlistItemId(match?.id ?? null);
+      })
+      .catch(() => {
+        if (active) {
+          setWishlistItemId(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [product.id]);
 
   const addToCart = async () => {
     if (!auth.isAuthenticated()) {
@@ -60,9 +93,45 @@ function ProductCard({ product }) {
     }
   };
 
+  const toggleWishlist = async () => {
+    if (!auth.isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
+    setWishlistBusy(true);
+    setMessage("");
+
+    try {
+      if (wishlistItemId) {
+        await api.removeFromWishlist(wishlistItemId);
+        setWishlistItemId(null);
+        setMessage("Removed from wishlist");
+      } else {
+        const item = await api.addToWishlist(product.id);
+        setWishlistItemId(item?.id ?? true);
+        setMessage("Saved to wishlist");
+      }
+      window.dispatchEvent(new CustomEvent("wishlist:updated"));
+    } catch (err) {
+      setMessage(err.message || "Unable to update wishlist");
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
+
   return (
     <article className="product-card">
-      <button className="wishlist-button" type="button" aria-label={`Add ${product.name} to wishlist`}>♡</button>
+      <button
+        className={`wishlist-button${wishlistItemId ? " active" : ""}`}
+        disabled={wishlistBusy}
+        onClick={toggleWishlist}
+        type="button"
+        aria-label={`${wishlistItemId ? "Remove" : "Add"} ${product.name} ${wishlistItemId ? "from" : "to"} wishlist`}
+        title={wishlistItemId ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        <span aria-hidden="true">{wishlistItemId ? "\u2665" : "\u2661"}</span>
+      </button>
       <Link to={`/products/${product.id}`} className="product-image-wrap">
         {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <span className="product-image-placeholder">No image</span>}
         {discount > 0 && <span className="discount-badge">{discount}% OFF</span>}

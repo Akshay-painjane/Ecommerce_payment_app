@@ -155,11 +155,16 @@ const formatApiDetail = (detail) => {
 
 const unwrap = (promise) => promise.then((response) => response.data).catch((error) => {
   if (error.response?.status === 401) {
-    throw new Error("Please login again");
+    const authError = new Error("Please login again");
+    authError.status = 401;
+    throw authError;
   }
 
   const detail = formatApiDetail(error.response?.data?.detail);
-  throw new Error(detail || error.message || "Something went wrong");
+  const apiError = new Error(detail || error.message || "Something went wrong");
+  apiError.status = error.response?.status;
+  apiError.response = error.response;
+  throw apiError;
 });
 
 const accessHeaders = () => {
@@ -219,6 +224,37 @@ export const api = {
     quantity: Number(payload.quantity || 1),
   })),
   removeCartItem: (id) => unwrap(apiClient.delete(`/cart/${id}`)),
+  getWishlist: () => unwrap(apiClient.get("/wishlist/")),
+  addToWishlist: (productId) => unwrap(apiClient.post("/wishlist/", {
+    product_id: productId?.product_id ?? productId?.product?.id ?? productId?.id ?? productId,
+  })),
+  removeFromWishlist: async (value) => {
+    const wishlistItemId = typeof value === "object"
+      ? value?.wishlistItemId ?? value?.wishlist_item_id ?? value?.wishlistId ?? value?.id
+      : value;
+
+    if (wishlistItemId) {
+      return unwrap(apiClient.delete(`/wishlist/${wishlistItemId}`));
+    }
+
+    const productId = value?.product_id ?? value?.product?.id;
+    const wishlist = await api.getWishlist();
+    const item = Array.isArray(wishlist)
+      ? wishlist.find((entry) => String(entry.product_id ?? entry.product?.id) === String(productId))
+      : null;
+
+    if (!item?.id) {
+      throw new Error("Wishlist item not found");
+    }
+
+    return unwrap(apiClient.delete(`/wishlist/${item.id}`));
+  },
+  clearWishlist: async () => {
+    const wishlist = await api.getWishlist();
+    const items = Array.isArray(wishlist) ? wishlist : [];
+    await Promise.all(items.filter((item) => item?.id).map((item) => api.removeFromWishlist(item.id)));
+    return { message: "Wishlist cleared" };
+  },
   createOrder: (payload) => {
     const items = Array.isArray(payload?.items) ? payload.items : [];
     return unwrap(apiClient.post("/orders/", { items }));
