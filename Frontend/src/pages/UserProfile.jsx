@@ -60,14 +60,14 @@ function UserProfile() {
     {
       label: "ADR",
       title: "Your Addresses",
-      subtitle: "Delivery address placeholder.",
+      subtitle: "Manage your preferred delivery address for checkout.",
       to: "#addresses",
     },
     {
       label: "PAY",
       title: "Payment Options",
-      subtitle: "Payment setup placeholder.",
-      to: "#payment-options",
+      subtitle: "Get help with secure payments, refunds, and payment options.",
+      to: "/payment-help",
     },
     {
       label: "CRT",
@@ -76,10 +76,16 @@ function UserProfile() {
       to: "/cart",
     },
     {
+      label: "RET",
+      title: "Returns & Refunds",
+      subtitle: "Start returns and check refund timelines.",
+      to: "/returns",
+    },
+    {
       label: "SUP",
       title: "Contact Us",
-      subtitle: "Support and store help.",
-      to: "#contact-us",
+      subtitle: "Reach our support team for orders, payments, and returns.",
+      to: "/contact",
     },
   ];
 
@@ -145,13 +151,13 @@ function UserProfile() {
 
         <article className="account-detail-panel" id="addresses">
           <h2>Your Addresses</h2>
-          <p>Delivery addresses will appear here when address management is available.</p>
+          <p>Use your preferred delivery address during checkout.</p>
           {user?.phone && <p>Contact phone: {user.phone}</p>}
         </article>
 
         <article className="account-detail-panel" id="payment-options">
           <h2>Payment Options</h2>
-          <p>Saved payment methods are a frontend placeholder for the current checkout flow.</p>
+          <p>Choose a secure payment method when you complete checkout.</p>
           <Link className="secondary-link" to="/cart">Continue to basket</Link>
         </article>
 

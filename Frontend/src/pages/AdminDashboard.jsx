@@ -22,6 +22,11 @@ function AdminDashboard() {
           <div><span>Inventory Units</span><strong>{inventory}</strong></div>
           <div><span>Store Status</span><strong>Live</strong></div>
         </div>
+        <section className="admin-info-card">
+          <span>Delivery charges</span>
+          <h2>Frontend-managed configuration</h2>
+          <p>Delivery charge configuration is currently frontend-managed. Backend API is required for permanent admin-managed delivery charges.</p>
+        </section>
         <div className="admin-actions">
           <Link className="primary-link" to="/admin/add-product">Add Product</Link>
           <Link className="secondary-link" to="/admin/products">Manage Products</Link>

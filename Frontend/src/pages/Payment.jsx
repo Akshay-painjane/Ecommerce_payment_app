@@ -91,7 +91,7 @@ function Payment() {
     <section className="payment-layout page-section">
       <div className="payment-panel">
         <h1>Payment</h1>
-        <p>Choose a payment method for Order #{order.id}. A successful payment updates the backend payment row and marks the order as paid.</p>
+        <p>Choose a secure payment method to complete your order.</p>
         {error && <p className="alert">{error}</p>}
         <div className="payment-methods">
           {methods.map((item) => (
@@ -110,7 +110,7 @@ function Payment() {
           </div>
         )}
         {method === "UPI" && <input placeholder="yourname@upi" />}
-        {method === "Cash on Delivery" && <p className="soft-note">Pay when the order is delivered. The backend will record this payment method.</p>}
+        {method === "Cash on Delivery" && <p className="soft-note">Pay when your order is delivered to your doorstep.</p>}
         <textarea placeholder="Billing address" defaultValue="221B Blue Avenue, Bengaluru, Karnataka 560001" />
         <button disabled={loading} onClick={pay} type="button">{loading ? "Processing..." : `Pay Rs. ${Number(amount).toLocaleString("en-IN")}`}</button>
       </div>

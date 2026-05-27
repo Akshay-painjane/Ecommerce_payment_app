@@ -64,7 +64,7 @@ function UserOrders() {
         <div>
           <Link to="/account">Your Account</Link>
           <h1>Your Orders</h1>
-          <p>Only orders created by the signed-in account are shown here.</p>
+          <p>Review your recent purchases, payment status, and order details in one place.</p>
         </div>
         <Link className="secondary-link" to="/products">Keep Shopping</Link>
       </div>
