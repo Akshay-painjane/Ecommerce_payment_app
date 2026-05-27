@@ -39,6 +39,8 @@ function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [wishlistItemId, setWishlistItemId] = useState(null);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -109,6 +111,37 @@ function ProductDetails() {
     };
   }, [id]);
 
+  useEffect(() => {
+    let active = true;
+
+    if (!auth.isAuthenticated() || !product?.id) {
+      return () => {
+        active = false;
+      };
+    }
+
+    api.getWishlist()
+      .then((items) => {
+        if (!active) {
+          return;
+        }
+
+        const match = Array.isArray(items)
+          ? items.find((item) => String(item.product_id ?? item.product?.id) === String(product.id))
+          : null;
+        setWishlistItemId(match?.id ?? null);
+      })
+      .catch(() => {
+        if (active) {
+          setWishlistItemId(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [product?.id]);
+
   const addToCart = async () => {
     if (!auth.isAuthenticated()) {
       navigate("/login");
@@ -136,6 +169,34 @@ function ProductDetails() {
     }
 
     navigate(`/checkout?product=${id}`);
+  };
+
+  const toggleWishlist = async () => {
+    if (!auth.isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
+    setWishlistBusy(true);
+    setMessage("");
+    setError("");
+
+    try {
+      if (wishlistItemId) {
+        await api.removeFromWishlist(wishlistItemId);
+        setWishlistItemId(null);
+        setMessage("Removed from wishlist");
+      } else {
+        const wishlistItem = await api.addToWishlist(product.id);
+        setWishlistItemId(wishlistItem?.id ?? true);
+        setMessage("Saved to wishlist");
+      }
+      window.dispatchEvent(new CustomEvent("wishlist:updated"));
+    } catch (err) {
+      setError(err.message || "Unable to update wishlist");
+    } finally {
+      setWishlistBusy(false);
+    }
   };
 
   if (loading) return <p className="loading page-section">Loading product...</p>;
@@ -205,6 +266,15 @@ function ProductDetails() {
           <label>Quantity<input value={quantity} min="1" max={stock || 1} onChange={(e) => setQuantity(Number(e.target.value))} type="number" /></label>
           {message && <p className="success">{message}</p>}
           {error && <p className="alert">{error}</p>}
+          <button
+            className={`detail-wishlist-button${wishlistItemId ? " active" : ""}`}
+            disabled={wishlistBusy}
+            onClick={toggleWishlist}
+            type="button"
+          >
+            <span aria-hidden="true">{wishlistItemId ? "\u2665" : "\u2661"}</span>
+            {wishlistItemId ? "Saved in Wishlist" : "Add to Wishlist"}
+          </button>
           <button disabled={stock <= 0} onClick={addToCart} type="button">Add to Cart</button>
           <button className="orange-button" disabled={stock <= 0} onClick={buyNow} type="button">Buy Now</button>
         </aside>

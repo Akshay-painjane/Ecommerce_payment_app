@@ -76,6 +76,12 @@ function UserProfile() {
       to: "/cart",
     },
     {
+      label: "WIS",
+      title: "Your Wishlist",
+      subtitle: "View saved products and move picks to cart.",
+      to: "/wishlist",
+    },
+    {
       label: "RET",
       title: "Returns & Refunds",
       subtitle: "Start returns and check refund timelines.",

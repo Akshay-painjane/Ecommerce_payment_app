@@ -43,6 +43,7 @@ function Footer() {
               <>
                 <Link to="/categories">Categories</Link>
                 {isUser && <Link to="/cart">Basket</Link>}
+                {isUser && <Link to="/wishlist">Wishlist</Link>}
               </>
             )}
 
@@ -94,6 +95,7 @@ function Footer() {
             {!isAdmin && (
               <>
                 <Link to={accountPath}>Your Account</Link>
+                {isUser && <Link to="/wishlist">Your Wishlist</Link>}
                 <Link to="/returns">Returns Centre</Link>
                 <Link to="/shipping-rates">Shipping Rates</Link>
                 <Link to="/payment-help">Payment Help</Link>
@@ -170,9 +172,15 @@ function Footer() {
           )}
 
           {isUser && (
-            <Link className="footer-cta outline" to="/cart">
-              View Basket
-            </Link>
+            <>
+              <Link className="footer-cta outline" to="/wishlist">
+                View Wishlist
+              </Link>
+
+              <Link className="footer-cta soft" to="/cart">
+                View Basket
+              </Link>
+            </>
           )}
         </div>
       </footer>

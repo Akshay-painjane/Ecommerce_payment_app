@@ -109,6 +109,13 @@ function Navbar() {
           )}
 
           {user && (
+            <Link className="wishlist-nav-link" to="/wishlist">
+              <span>Saved</span>
+              <strong>Wishlist</strong>
+            </Link>
+          )}
+
+          {user && (
             <Link className="cart-link" to="/cart">
               <span>Cart</span>
               <strong>Basket</strong>
