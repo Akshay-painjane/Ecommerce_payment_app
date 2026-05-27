@@ -6,90 +6,16 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.cart import Cart
+from app.models.user import User
 
-from app.schemas.order import (
-    SingleOrderCreate,
-    BulkOrderCreate
-)
+from app.schemas.order import BulkOrderCreate
 
-
-# -----------------------------
-# Single Product Order
-# -----------------------------
-
-def create_single_order(
-    db: Session,
-    user_id: int,
-    order: SingleOrderCreate
-):
-
-    product = db.query(Product).filter(
-        Product.id == order.product_id
-    ).first()
-
-    if not product:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Product not found"
-        )
-
-    if product.stock < order.quantity:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Out of stock"
-        )
-
-    total_price = (
-        product.price * order.quantity
-    )
-
-    # Create order
-
-    db_order = Order(
-        user_id=user_id,
-        total_price=total_price,
-        status="PENDING"
-    )
-
-    db.add(db_order)
-
-    db.commit()
-
-    db.refresh(db_order)
-
-    # Reduce stock
-
-    product.stock -= order.quantity
-
-    # Create order item
-
-    order_item = OrderItem(
-        order_id=db_order.id,
-        product_id=product.id,
-        quantity=order.quantity,
-        price=product.price
-    )
-
-    db.add(order_item)
-
-    # Remove ordered product from cart
-
-    db.query(Cart).filter(
-        Cart.user_id == user_id,
-        Cart.product_id == product.id
-    ).delete()
-
-    db.commit()
-
-    db.refresh(db_order)
-
-    return db_order
+from app.utils.email_service import send_email
 
 
 # -----------------------------
-# Bulk Product Order
+# Create Order
+# Supports single and multiple products
 # -----------------------------
 
 def create_bulk_order(
@@ -129,8 +55,11 @@ def create_bulk_order(
     # Create order
 
     db_order = Order(
+
         user_id=user_id,
+
         total_price=total_price,
+
         status="PENDING"
     )
 
@@ -155,9 +84,13 @@ def create_bulk_order(
         # Create order item
 
         order_item = OrderItem(
+
             order_id=db_order.id,
+
             product_id=product.id,
+
             quantity=item.quantity,
+
             price=product.price
         )
 
@@ -172,6 +105,31 @@ def create_bulk_order(
     db.commit()
 
     db.refresh(db_order)
+
+    # Send order confirmation email
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    send_email(
+
+        user.email,
+
+        "Order Placed Successfully",
+
+        f"""
+        <h2>Hello {user.name}</h2>
+
+        <p>Your order has been placed successfully.</p>
+
+        <p>Order ID: {db_order.id}</p>
+
+        <p>Total Amount: ₹{total_price}</p>
+
+        <p>Thank you for shopping with Style Store.</p>
+        """
+    )
 
     return db_order
 
@@ -238,5 +196,32 @@ def update_order_status(
     db.commit()
 
     db.refresh(order)
+
+    # Get user
+
+    user = db.query(User).filter(
+        User.id == order.user_id
+    ).first()
+
+    # Send status update email
+
+    send_email(
+
+        user.email,
+
+        f"Order {status}",
+
+        f"""
+        <h2>Hello {user.name}</h2>
+
+        <p>Your order status has been updated.</p>
+
+        <p>Order ID: {order.id}</p>
+
+        <p>Current Status: {status}</p>
+
+        <p>Thank you for shopping with Style Store.</p>
+        """
+    )
 
     return order
