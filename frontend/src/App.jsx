@@ -19,6 +19,8 @@ import ReturnRefund from "./pages/ReturnRefund.jsx";
 import ShippingRates from "./pages/ShippingRates.jsx";
 import UserProfile from "./pages/UserProfile.jsx";
 import UserOrders from "./pages/UserOrders.jsx";
+import Addresses from "./pages/Addresses.jsx";
+import LoginSecurity from "./pages/LoginSecurity.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminAddProduct from "./pages/AdminAddProduct.jsx";
 import AdminProducts from "./pages/AdminProducts.jsx";
@@ -87,6 +89,8 @@ function App() {
             <Route path="/shipping-rates" element={<ShippingRates />} />
             <Route path="/profile" element={<AuthRoute><UserProfile /></AuthRoute>} />
             <Route path="/account" element={<AuthRoute><UserProfile /></AuthRoute>} />
+            <Route path="/account/addresses" element={<AuthRoute><Addresses /></AuthRoute>} />
+            <Route path="/account/login-security" element={<AuthRoute><LoginSecurity /></AuthRoute>} />
             <Route path="/orders" element={<AuthRoute><UserOrders /></AuthRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/add-product" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
