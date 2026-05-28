@@ -44,6 +44,13 @@ function UserProfile() {
     navigate("/login");
   };
 
+  const scrollToContactDetails = () => {
+    document.getElementById("contact-details")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const cards = [
     {
       label: "ORD",
@@ -55,13 +62,13 @@ function UserProfile() {
       label: "SEC",
       title: "Login & Security",
       subtitle: "Review your account details.",
-      to: "#login-security",
+      to: "/account/login-security",
     },
     {
       label: "ADR",
       title: "Your Addresses",
       subtitle: "Manage your preferred delivery address for checkout.",
-      to: "#addresses",
+      to: "/account/addresses",
     },
     {
       label: "PAY",
@@ -91,7 +98,7 @@ function UserProfile() {
       label: "SUP",
       title: "Contact Us",
       subtitle: "Reach our support team for orders, payments, and returns.",
-      to: "/contact",
+      action: scrollToContactDetails,
     },
   ];
 
@@ -127,13 +134,23 @@ function UserProfile() {
 
       <div className="account-card-grid">
         {cards.map((card) => (
-          <Link className="account-card" key={card.title} to={card.to}>
-            <AccountMark label={card.label} />
-            <span>
-              <strong>{card.title}</strong>
-              <small>{card.subtitle}</small>
-            </span>
-          </Link>
+          card.action ? (
+            <button className="account-card" key={card.title} onClick={card.action} type="button">
+              <AccountMark label={card.label} />
+              <span>
+                <strong>{card.title}</strong>
+                <small>{card.subtitle}</small>
+              </span>
+            </button>
+          ) : (
+            <Link className="account-card" key={card.title} to={card.to}>
+              <AccountMark label={card.label} />
+              <span>
+                <strong>{card.title}</strong>
+                <small>{card.subtitle}</small>
+              </span>
+            </Link>
+          )
         ))}
         <button className="account-card account-logout-card" onClick={logout} type="button">
           <AccountMark label="OUT" />
@@ -167,10 +184,27 @@ function UserProfile() {
           <Link className="secondary-link" to="/cart">Continue to basket</Link>
         </article>
 
-        <article className="account-detail-panel" id="contact-us">
-          <h2>Contact Us</h2>
-          <p>Need help with an order or payment? Start from your orders or contact Style Store support.</p>
-          <Link className="secondary-link" to="/orders">View orders</Link>
+        <article className="account-detail-panel account-contact-details" id="contact-details">
+          <h2>Contact Details</h2>
+          <p>Need help with an order, payment, or return? Style Store support is ready to help.</p>
+          <dl className="account-contact-list">
+            <div>
+              <dt>Customer Support Email</dt>
+              <dd><a href="mailto:monikachebrolu1@gmail.com">monikachebrolu1@gmail.com</a></dd>
+            </div>
+            <div>
+              <dt>Phone Number</dt>
+              <dd><a href="tel:+91 9700233080">+91 9700233080 </a></dd>
+            </div>
+            <div>
+              <dt>Working Hours</dt>
+              <dd>Monday to Saturday, 9:00 AM - 7:00 PM</dd>
+            </div>
+            <div>
+              <dt>Live Chat</dt>
+              <dd>Available from the help widget during working hours.</dd>
+            </div>
+          </dl>
         </article>
       </div>
     </section>
