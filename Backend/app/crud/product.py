@@ -41,9 +41,22 @@ def create_product(
     return db_product
 
 
-def get_all_products(db: Session):
+def get_all_products(
+    db: Session,
+    search: str = None
+):
 
-    return db.query(Product).all()
+    query = db.query(Product)
+
+    # Search by product name
+
+    if search:
+
+        query = query.filter(
+            Product.name.ilike(f"%{search}%")
+        )
+
+    return query.all()
 
 
 def get_product_by_id(

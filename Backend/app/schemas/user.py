@@ -13,7 +13,7 @@ class UserCreate(BaseModel):
 
     profile_image: str | None = None
 
-
+    address: str | None = None
 class UserLogin(BaseModel):
 
     email: EmailStr
@@ -36,6 +36,8 @@ class UserUpdate(BaseModel):
 
     profile_image: str | None = None
 
+    address: str | None = None
+
 
 class UserOut(BaseModel):
 
@@ -50,6 +52,8 @@ class UserOut(BaseModel):
     phone: str | None = None
 
     profile_image: str | None = None
+
+    address: str | None = None
 
     class Config:
         from_attributes = True

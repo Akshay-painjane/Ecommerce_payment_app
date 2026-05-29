@@ -44,7 +44,7 @@ router = APIRouter(
 # -----------------------------
 
 @router.post(
-    "/",
+    "/create",
     response_model=ProductOut
 )
 def create_new_product(
@@ -113,16 +113,25 @@ def create_new_product(
 # Get All Products
 # -----------------------------
 
+# -----------------------------
+# Get All Products + Search
+# -----------------------------
+
 @router.get(
     "/",
     response_model=list[ProductOut]
 )
 def get_products(
+
+    search: str = None,
+
     db: Session = Depends(get_db)
 ):
 
-    return get_all_products(db)
-
+    return get_all_products(
+        db,
+        search
+    )
 
 # -----------------------------
 # Get Single Product

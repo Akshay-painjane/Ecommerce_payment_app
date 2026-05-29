@@ -13,7 +13,7 @@ class PaymentCreate(BaseModel):
 
     order_id: int
     amount: Decimal
-    method: PaymentMethod = PaymentMethod.COD
+    method: PaymentMethod 
 
 
 class PaymentOut(BaseModel):

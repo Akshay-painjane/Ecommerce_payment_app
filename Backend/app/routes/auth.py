@@ -44,7 +44,8 @@ def user_payload(db_user):
         "email": db_user.email,
         "role": db_user.role,
         "phone": db_user.phone,
-        "profile_image": db_user.profile_image
+        "profile_image": db_user.profile_image,
+        "address": db_user.address
     }
 
 @router.post("/register", response_model=UserOut)

@@ -9,6 +9,7 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.payment import Payment
 from app.models.wishlist import Wishlist
+from app.models.return_request import ReturnRequest
 #static
 from fastapi.staticfiles import StaticFiles
 #Routers
@@ -20,7 +21,7 @@ from app.routes.orders import router as order_router
 from app.routes.payments import router as payment_router
 from app.routes import google_auth
 from app.routes.wishlist import router as wishlist_router
-
+from app.routes import returns
 from starlette.middleware.sessions import SessionMiddleware
 app = FastAPI(
     title="Ecommerce Payment App",
@@ -67,6 +68,7 @@ app.include_router(order_router)
 app.include_router(payment_router)
 app.include_router(google_auth.router)
 app.include_router(wishlist_router)
+app.include_router(returns.router)
 #Home Route
 @app.get("/", tags=["Core"])
 def home():

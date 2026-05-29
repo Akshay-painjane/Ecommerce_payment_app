@@ -1,8 +1,8 @@
-"""add user_id to payments
+"""add address to user
 
-Revision ID: c8d55f1b744a
-Revises: cb3a63a9c0db
-Create Date: 2026-05-26 12:08:25.472422
+Revision ID: 96c0f168b0ca
+Revises: 8f6b77f70a09
+Create Date: 2026-05-28 14:55:41.572998
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c8d55f1b744a'
-down_revision: Union[str, Sequence[str], None] = 'cb3a63a9c0db'
+revision: str = '96c0f168b0ca'
+down_revision: Union[str, Sequence[str], None] = '8f6b77f70a09'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
