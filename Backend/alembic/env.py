@@ -26,7 +26,7 @@ from app.models.category import Category
 from app.models.cart import Cart
 from app.models.order import Order
 from app.models.payment import Payment
-
+from app.models.return_request import ReturnRequest
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
