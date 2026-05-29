@@ -33,7 +33,9 @@ def create_user(
 
         phone=user.phone,
 
-        profile_image=user.profile_image
+        profile_image=user.profile_image,
+
+        address=user.address
     )
 
     db.add(db_user)
@@ -78,6 +80,8 @@ def update_user_profile(
     user.phone = user_data.phone
 
     user.profile_image = user_data.profile_image
+
+    user.address = user_data.address
 
     db.commit()
 

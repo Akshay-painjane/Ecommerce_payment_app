@@ -11,7 +11,7 @@ router = APIRouter(
     tags=["Payments"]
 )
 
-@router.post("/", response_model=PaymentOut)
+@router.post("/create", response_model=PaymentOut)
 def create_new_payment(
     payment: PaymentCreate,
     db: Session = Depends(get_db),
