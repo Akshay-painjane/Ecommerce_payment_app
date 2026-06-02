@@ -55,6 +55,7 @@ function Checkout() {
   const [deliveryLocation, setDeliveryLocation] = useState("Bengaluru");
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("Card");
   const [error, setError] = useState("");
   const placingRef = useRef(false);
 
@@ -183,8 +184,20 @@ function Checkout() {
     }
 
     try {
-      const order = await api.createOrder(payload);
-      navigate("/payment", { state: { order, amount: finalTotal } });
+      const orderResponse = await api.createOrder({
+        ...payload,
+        payment_method: paymentMethod,
+        delivery_charge: deliveryCharge,
+        delivery_location: deliveryLocation,
+      });
+
+      navigate("/payment", {
+        state: {
+          order: orderResponse,
+          amount: finalTotal,
+          payment_method: paymentMethod,
+        },
+      });
     } catch (err) {
       setError(err.message || "Unable to place order.");
     } finally {
@@ -220,6 +233,24 @@ function Checkout() {
             </select>
           </label>
           <textarea value={address} onChange={(e) => setAddress(e.target.value)} />
+        </section>
+
+        <section className="checkout-panel">
+          <h2>Payment method</h2>
+          <div className="payment-methods">
+            {['Card', 'UPI', 'Cash on Delivery'].map((method) => (
+              <label key={method}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value={method}
+                  checked={paymentMethod === method}
+                  onChange={() => setPaymentMethod(method)}
+                />
+                {method}
+              </label>
+            ))}
+          </div>
         </section>
 
         <section className="checkout-panel">

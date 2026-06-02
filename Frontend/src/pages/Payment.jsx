@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../services/api.js";
 
-const methods = ["Card", "UPI", "Cash on Delivery"];
-
 function Payment() {
   const { state } = useLocation();
-  const [order, setOrder] = useState(() => state?.order || null);
+  const initialOrderData = state?.order || null;
+  const initialMethod = state?.payment_method || "Card";
+  const [orderData, setOrderData] = useState(() => initialOrderData);
+  const order = orderData?.order || orderData;
+  const razorpayOrder = orderData?.razorpay_order || order?.razorpay_order || null;
   const amount = state?.amount || order?.total_price || 0;
-  const [method, setMethod] = useState("Card");
+  const [method, setMethod] = useState(initialMethod);
   const [receipt, setReceipt] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [recovering, setRecovering] = useState(() => !state?.order);
+  const [recovering, setRecovering] = useState(() => !order);
 
   useEffect(() => {
     let active = true;
@@ -52,16 +54,89 @@ function Payment() {
     };
   }, [order]);
 
+  const loadRazorpayScript = () => new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      return resolve(true);
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Unable to load Razorpay SDK."));
+    document.body.appendChild(script);
+  });
+
+  const openRazorpay = async () => {
+    if (!razorpayOrder) {
+      throw new Error("Razorpay order is unavailable.");
+    }
+
+    await loadRazorpayScript();
+
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKey) {
+      throw new Error("Razorpay key is not configured. Set VITE_RAZORPAY_KEY_ID in the frontend environment.");
+    }
+
+    const options = {
+      key: razorpayKey,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: "Style Store",
+      description: `Payment for order #${order?.id || "N/A"}`,
+      order_id: razorpayOrder.id,
+      handler: async (response) => {
+        try {
+          setLoading(true);
+          const data = await api.verifyPayment({
+            order_id: order.id,
+            gateway_order_id: response.razorpay_order_id,
+            gateway_payment_id: response.razorpay_payment_id,
+            signature: response.razorpay_signature,
+            method,
+          });
+          setReceipt(data);
+        } catch (verifyError) {
+          setError(verifyError.message || "Unable to verify payment.");
+        } finally {
+          setLoading(false);
+        }
+      },
+      prefill: {
+        email: "",
+      },
+      theme: {
+        color: "#FFA500",
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
   const pay = async () => {
     setLoading(true);
     setError("");
+
     try {
-      const data = await api.createPayment({ order_id: order.id, amount, method });
+      if (razorpayOrder) {
+        await openRazorpay();
+        return;
+      }
+
+      const data = await api.createPayment({
+        order_id: order.id,
+        amount,
+        method,
+        gateway: "cod",
+      });
       setReceipt(data);
     } catch (err) {
       setError(err.message || "Payment failed");
     } finally {
-      setLoading(false);
+      if (!razorpayOrder) {
+        setLoading(false);
+      }
     }
   };
 
@@ -87,37 +162,32 @@ function Payment() {
     );
   }
 
+  const displayMethod = order?.payment_method || method;
+  const isOnlinePayment = !!razorpayOrder;
+
   return (
     <section className="payment-layout page-section">
       <div className="payment-panel">
         <h1>Payment</h1>
-        <p>Choose a secure payment method to complete your order.</p>
+        <p>
+          {isOnlinePayment
+            ? "Complete the payment securely through Razorpay."
+            : "Your order will be processed with Cash on Delivery."
+          }
+        </p>
         {error && <p className="alert">{error}</p>}
-        <div className="payment-methods">
-          {methods.map((item) => (
-            <label key={item}>
-              <input checked={method === item} onChange={() => setMethod(item)} type="radio" />
-              {item}
-            </label>
-          ))}
+        <div className="payment-details">
+          <p><strong>Order #{order.id}</strong></p>
+          <p>Amount: Rs. {Number(amount).toLocaleString("en-IN")}</p>
+          <p>Payment method: {displayMethod}</p>
         </div>
-        {method === "Card" && (
-          <div className="card-form">
-            <input placeholder="Card number" />
-            <input placeholder="Name on card" />
-            <input placeholder="MM / YY" />
-            <input placeholder="CVV" />
-          </div>
-        )}
-        {method === "UPI" && <input placeholder="yourname@upi" />}
-        {method === "Cash on Delivery" && <p className="soft-note">Pay when your order is delivered to your doorstep.</p>}
-        <textarea placeholder="Billing address" defaultValue="221B Blue Avenue, Bengaluru, Karnataka 560001" />
-        <button disabled={loading} onClick={pay} type="button">{loading ? "Processing..." : `Pay Rs. ${Number(amount).toLocaleString("en-IN")}`}</button>
+        <button disabled={loading} onClick={pay} type="button">
+          {loading ? "Processing..." : isOnlinePayment ? `Pay Rs. ${Number(amount).toLocaleString("en-IN")}` : `Confirm COD order`}
+        </button>
       </div>
       <aside className="summary-box">
         <h2>Order Summary</h2>
-        <p>Order #{order.id}</p>
-        <p>Payment method: {method}</p>
+        <p>Items: {order.items?.length ?? order.order_items?.length ?? 0}</p>
         <strong>Total: Rs. {Number(amount).toLocaleString("en-IN")}</strong>
       </aside>
     </section>

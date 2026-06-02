@@ -29,6 +29,11 @@ class Order(Base):
         default="PENDING"
     )
 
+    payment_status = Column(
+        String,
+        default="PENDING"
+    )
+
     items = relationship(
         "OrderItem",
         backref="order"

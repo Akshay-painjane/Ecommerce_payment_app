@@ -255,12 +255,10 @@ export const api = {
     await Promise.all(items.filter((item) => item?.id).map((item) => api.removeFromWishlist(item.id)));
     return { message: "Wishlist cleared" };
   },
-  createOrder: (payload) => {
-    const items = Array.isArray(payload?.items) ? payload.items : [];
-    return unwrap(apiClient.post("/orders/", { items }));
-  },
+  createOrder: (payload) => unwrap(apiClient.post("/orders/", payload)),
   getOrders: () => unwrap(apiClient.get("/orders/my-orders")),
-  createPayment: (payload) => unwrap(apiClient.post("/payments/", payload)),
+  createPayment: (payload) => unwrap(apiClient.post("/payments/create", payload)),
+  verifyPayment: (payload) => unwrap(apiClient.post("/payments/verify", payload)),
 };
 
 export const categories = [];

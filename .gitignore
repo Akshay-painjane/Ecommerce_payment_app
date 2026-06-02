@@ -6,3 +6,4 @@ __pycache__/
 .vscode/
 **/alembic/versions/
 alembic.ini
+Frontend/.env
