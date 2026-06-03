@@ -132,7 +132,6 @@ def me(
 
     return user_payload(current_user)
 
-
 @router.put(
     "/me",
     response_model=UserOut
@@ -142,6 +141,8 @@ def update_profile(
     name: str = Form(...),
 
     phone: str = Form(None),
+
+    address: str = Form(None),
 
     file: UploadFile = File(None),
 
@@ -168,7 +169,9 @@ def update_profile(
 
         phone=phone,
 
-        profile_image=image_url
+        profile_image=image_url,
+
+        address=address
     )
 
     updated_user = update_user_profile(
@@ -181,7 +184,6 @@ def update_profile(
     )
 
     return updated_user
-
 
 @router.post("/refresh")
 def refresh_access_token(
