@@ -17,7 +17,7 @@ function UserProfile() {
   useEffect(() => {
     let active = true;
 
-    api.me()
+    api.user()
       .then((data) => {
         if (active) {
           setUser(data);

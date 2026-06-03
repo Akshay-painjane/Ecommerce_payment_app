@@ -125,7 +125,7 @@ def login(
     }
 
 
-@router.get("/me")
+@router.get("/user", response_model=UserOut)
 def me(
     current_user = Depends(get_current_user)
 ):
@@ -133,7 +133,7 @@ def me(
     return user_payload(current_user)
 
 @router.put(
-    "/me",
+    "/user/update-profile",
     response_model=UserOut
 )
 def update_profile(
