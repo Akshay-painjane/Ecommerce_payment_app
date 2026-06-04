@@ -195,7 +195,8 @@ export const api = {
   login: (payload) => unwrap(apiClient.post("/auth/login", payload)),
   register: (payload) => unwrap(apiClient.post("/auth/register", payload)),
   refresh: (refresh_token) => unwrap(apiClient.post("/auth/refresh", { refresh_token })),
-  me: () => unwrap(apiClient.get("/auth/me")),
+  user: () => unwrap(apiClient.get("/auth/user")),
+  userUpdate: (payload) => unwrap(apiClient.put("/auth/user/update-profile", payload, accessHeaders())),
   getProducts: () => unwrap(apiClient.get("/products/")),
   getProduct: (id) => unwrap(apiClient.get(`/products/${id}`)),
   getCategories: () => unwrap(apiClient.get("/categories/get-all")),
@@ -255,12 +256,10 @@ export const api = {
     await Promise.all(items.filter((item) => item?.id).map((item) => api.removeFromWishlist(item.id)));
     return { message: "Wishlist cleared" };
   },
-  createOrder: (payload) => {
-    const items = Array.isArray(payload?.items) ? payload.items : [];
-    return unwrap(apiClient.post("/orders/", { items }));
-  },
+  createOrder: (payload) => unwrap(apiClient.post("/orders/", payload)),
   getOrders: () => unwrap(apiClient.get("/orders/my-orders")),
-  createPayment: (payload) => unwrap(apiClient.post("/payments/", payload)),
+  createPayment: (payload) => unwrap(apiClient.post("/payments/create", payload)),
+  verifyPayment: (payload) => unwrap(apiClient.post("/payments/verify", payload)),
 };
 
 export const categories = [];

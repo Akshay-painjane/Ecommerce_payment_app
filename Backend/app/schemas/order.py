@@ -1,6 +1,9 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 from app.schemas.order_item import OrderItemOut
+from app.schemas.payment import PaymentMethod
 
 
 # Single order product
@@ -24,6 +27,7 @@ class OrderProduct(BaseModel):
 class BulkOrderCreate(BaseModel):
 
     items: list[OrderProduct]
+    payment_method: PaymentMethod = PaymentMethod.COD
 
 
 class OrderOut(BaseModel):
@@ -40,3 +44,10 @@ class OrderOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class OrderCreateResponse(BaseModel):
+
+    order: OrderOut
+
+    razorpay_order: dict[str, Any] | None = None

@@ -25,3 +25,10 @@ def create_razorpay_order(
     })
 
     return payment
+
+
+def verify_payment_signature(
+    payment_data: dict
+):
+
+    return client.utility.verify_payment_signature(payment_data)

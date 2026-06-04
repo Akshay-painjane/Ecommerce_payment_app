@@ -47,16 +47,37 @@ def create_return(
     current_user = Depends(get_current_user)
 ):
 
-    return create_return_request(
-
-        db,
-
-        current_user.id,
-
-        data
-    )
-
-
+    new_return = create_return_request(
+    db,
+    current_user.id,
+    data
+)
+    if new_return == "NOT_OWNER":
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot return someone else's order"
+        )
+    if not new_return:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+    if new_return == "PAYMENT_PENDING":
+        raise HTTPException(
+            status_code=400,
+            detail="Only paid orders can be returned"
+        )
+    if new_return == "NOT_DELIVERED":
+        raise HTTPException(
+            status_code=400,
+            detail="Only delivered orders can be returned"
+        )
+    if new_return == "RETURN_ALREADY_EXISTS":
+        raise HTTPException(
+            status_code=400,
+            detail="Return request already exists for this order"
+        )
+    return new_return
 # Get User Returns
 
 @router.get(
@@ -100,6 +121,11 @@ def update_status(
 
         status
     )
+    if updated_return == "INVALID_STATUS":
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid status"
+        )
 
     if not updated_return:
 

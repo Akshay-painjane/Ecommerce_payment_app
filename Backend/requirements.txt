@@ -13,3 +13,4 @@ email-validator
 alembic
 authlib
 cloudinary
+razorpay

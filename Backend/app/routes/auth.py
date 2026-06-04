@@ -125,16 +125,15 @@ def login(
     }
 
 
-@router.get("/me")
+@router.get("/user", response_model=UserOut)
 def me(
     current_user = Depends(get_current_user)
 ):
 
     return user_payload(current_user)
 
-
 @router.put(
-    "/me",
+    "/user/update-profile",
     response_model=UserOut
 )
 def update_profile(
@@ -142,6 +141,8 @@ def update_profile(
     name: str = Form(...),
 
     phone: str = Form(None),
+
+    address: str = Form(None),
 
     file: UploadFile = File(None),
 
@@ -168,7 +169,9 @@ def update_profile(
 
         phone=phone,
 
-        profile_image=image_url
+        profile_image=image_url,
+
+        address=address
     )
 
     updated_user = update_user_profile(
@@ -181,7 +184,6 @@ def update_profile(
     )
 
     return updated_user
-
 
 @router.post("/refresh")
 def refresh_access_token(

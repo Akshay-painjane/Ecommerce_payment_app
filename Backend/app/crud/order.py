@@ -7,10 +7,13 @@ from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.cart import Cart
 from app.models.user import User
+from app.models.payment import Payment
 
 from app.schemas.order import BulkOrderCreate
+from app.schemas.payment import PaymentMethod
 
 from app.utils.email_service import send_email
+from app.utils.razorpay_service import create_razorpay_order
 
 
 # -----------------------------
@@ -18,7 +21,7 @@ from app.utils.email_service import send_email
 # Supports single and multiple products
 # -----------------------------
 
-def create_bulk_order(
+def create_order(
     db: Session,
     user_id: int,
     order: BulkOrderCreate
@@ -52,6 +55,10 @@ def create_bulk_order(
             product.price * item.quantity
         )
 
+    payment_method = order.payment_method
+    is_online_payment = payment_method != PaymentMethod.COD
+    razorpay_order = None
+
     # Create order
 
     db_order = Order(
@@ -60,7 +67,9 @@ def create_bulk_order(
 
         total_price=total_price,
 
-        status="PENDING"
+        status="PENDING",
+
+        payment_status="PENDING" if is_online_payment else "SUCCESS"
     )
 
     db.add(db_order)
@@ -95,6 +104,29 @@ def create_bulk_order(
         )
 
         db.add(order_item)
+
+    db_payment = Payment(
+
+        order_id=db_order.id,
+
+        user_id=user_id,
+
+        amount=total_price,
+
+        method=payment_method.value,
+
+        status="pending" if is_online_payment else "success",
+
+        gateway="razorpay" if is_online_payment else "cod",
+
+        receipt_id=f"SS-{db_order.id:06d}"
+    )
+
+    if is_online_payment:
+        razorpay_order = create_razorpay_order(total_price)
+        db_payment.gateway_order_id = razorpay_order.get("id")
+
+    db.add(db_payment)
 
     # Clear cart after successful order
 
@@ -131,7 +163,10 @@ def create_bulk_order(
         """
     )
 
-    return db_order
+    return {
+        "order": db_order,
+        "razorpay_order": razorpay_order
+    }
 
 
 # -----------------------------

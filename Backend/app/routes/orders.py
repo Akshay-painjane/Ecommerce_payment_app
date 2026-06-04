@@ -10,11 +10,12 @@ from app.database import get_db
 
 from app.schemas.order import (
     BulkOrderCreate,
-    OrderOut
+    OrderOut,
+    OrderCreateResponse
 )
 
 from app.crud.order import (
-    create_bulk_order,
+    create_order,
     get_user_orders,
     get_all_orders,
     update_order_status
@@ -36,7 +37,7 @@ router = APIRouter(
 
 @router.post(
     "/",
-    response_model=OrderOut,
+    response_model=OrderCreateResponse,
     status_code=201
 )
 def place_order(
@@ -48,7 +49,7 @@ def place_order(
     current_user = Depends(get_current_user)
 ):
 
-    return create_bulk_order(
+    return create_order(
 
         db,
 
