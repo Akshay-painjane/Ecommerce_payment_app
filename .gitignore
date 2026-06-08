@@ -7,3 +7,8 @@ __pycache__/
 **/alembic/versions/
 alembic.ini
 Frontend/.env
+# Node
+Frontend/node_modules
+
+# Docker
+postgres_data

@@ -23,6 +23,9 @@ from app.routes import google_auth
 from app.routes.wishlist import router as wishlist_router
 from app.routes import returns
 from starlette.middleware.sessions import SessionMiddleware
+from app.database import Base, engine
+
+Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Ecommerce Payment App",
     version="1.0.0",
