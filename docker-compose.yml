@@ -1,0 +1,37 @@
+version: "3.9"
+ 
+services:
+  db:
+    image: postgres:16
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_DB: ecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+ 
+  backend:
+    build:
+      context: ./Backend
+    container_name: ecommerce_backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./Backend/.env
+    depends_on:
+      - db
+ 
+  frontend:
+    build:
+      context: ./Frontend
+    container_name: ecommerce_frontend
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+ 
+volumes:
+  postgres_data:
