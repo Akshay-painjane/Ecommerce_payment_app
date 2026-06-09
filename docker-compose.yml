@@ -1,4 +1,15 @@
 version: "3.9"
+<<<<<<< HEAD
+ 
+services:
+  db:
+    image: postgres:16
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_DB: ecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+=======
 
 services:
 
@@ -10,15 +21,29 @@ services:
       POSTGRES_DB: ecommerce
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+>>>>>>> 2ed5491e661fbf021218cc3554858858681697b9
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+<<<<<<< HEAD
+ 
+=======
 
+>>>>>>> 2ed5491e661fbf021218cc3554858858681697b9
   backend:
     build:
       context: ./Backend
     container_name: ecommerce_backend
+<<<<<<< HEAD
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./Backend/.env
+    depends_on:
+      - db
+ 
+=======
     restart: always
     env_file:
       - ./Backend/.env
@@ -29,10 +54,18 @@ services:
     volumes:
       - ./Backend:/app
 
+>>>>>>> 2ed5491e661fbf021218cc3554858858681697b9
   frontend:
     build:
       context: ./Frontend
     container_name: ecommerce_frontend
+<<<<<<< HEAD
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+ 
+=======
     restart: always
     ports:
       - "5173:5173"
@@ -42,5 +75,6 @@ services:
       - ./Frontend:/app
       - /app/node_modules
 
+>>>>>>> 2ed5491e661fbf021218cc3554858858681697b9
 volumes:
   postgres_data:
