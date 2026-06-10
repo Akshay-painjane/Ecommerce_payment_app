@@ -215,7 +215,7 @@ export const api = {
       });
     }
 
-    return unwrap(apiClient.post("/products/", formData));
+    return unwrap(apiClient.post("/products/create", formData, accessHeaders()));
   },
   updateProduct: (id, payload) => unwrap(apiClient.put(`/products/${id}`, payload, accessHeaders())),
   deleteProduct: (id) => unwrap(apiClient.delete(`/products/${id}`)),
