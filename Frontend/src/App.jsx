@@ -74,7 +74,7 @@ function App() {
             <Route path="/categories" element={<Categories />} />
             <Route path="/categories/:categoryName" element={<Products />} />
             <Route path="/category/:categoryName" element={<Products />} />
-            <Route path="/products" element={<Products />} />
+            <Route path="/products/create" element={<Products />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/products/:id" element={<ProductDetails />} />
             <Route path="/wishlist" element={<AuthRoute><Wishlist /></AuthRoute>} />
